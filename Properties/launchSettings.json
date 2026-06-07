@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "BingWPDLHelper (Package)": {
+      "commandName": "MsixPackage",
+      "nativeDebugging": true
+    },
+    "BingWPDLHelper (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
