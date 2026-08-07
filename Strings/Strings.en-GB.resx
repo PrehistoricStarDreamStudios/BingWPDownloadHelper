@@ -123,7 +123,6 @@
   <data name="MigrateWallpaperTitle" xml:space="preserve"><value>Wallpaper folder migration</value></data>
   <data name="MigrateWallpaperAsk" xml:space="preserve"><value>An old wallpaper folder was detected. Migrate to the new location?</value></data>
   <data name="SettingsSavedRestartHint" xml:space="preserve"><value>Settings saved. Some changes take effect after restart.</value></data>
-  <data name="SettingsExitApp" xml:space="preserve"><value>Close application</value></data>
   <data name="AboutVersionLabel" xml:space="preserve"><value>Version</value></data>
   <data name="AboutDescriptionFull" xml:space="preserve"><value>Bing daily wallpaper downloader and manager — open source, lightweight, cross-platform compatible.</value></data>
   <data name="AboutOpenLinks" xml:space="preserve"><value>Open friendly links page</value></data>

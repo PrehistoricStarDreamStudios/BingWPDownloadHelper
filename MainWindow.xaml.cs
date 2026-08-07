@@ -31,9 +31,9 @@ namespace BingPaper
     public sealed partial class MainWindow : Window
     {
         // application config and folders
-        private string AppFolderPath;
-        private string WallpaperFolderPath;
-        private string ConfigFilePath;
+        private string AppFolderPath = null!;
+        private string WallpaperFolderPath = null!;
+        private string ConfigFilePath = null!;
         private readonly Dictionary<string, string> _config = new(StringComparer.OrdinalIgnoreCase);
         private const string AppVersion = "b0.1";
         private bool AnimationEnabled = true;
@@ -48,7 +48,6 @@ namespace BingPaper
         // 壁纸列表（url + 标签集合），用于标签筛选与预览
         private readonly List<(string url, List<string> tags)> _allWallpapers = new();
         private List<(string url, List<string> tags)> _filteredWallpapers = new();
-        private int _currentWallpaperIndex = 0;
 
         // 托盘管理器与退出标志（关闭行为：Tray/Exit）
         private TrayManager? _trayManager;
@@ -57,7 +56,7 @@ namespace BingPaper
         private bool _isLoadingSettings = false;
 
         // 详细异常记录到日志文件（同时写入临时目录以保证可写性）
-        private void LogException(Exception ex)
+        private void LogException(Exception? ex)
         {
             try
             {
@@ -156,7 +155,7 @@ namespace BingPaper
                 var toggleBtn = this.AppTitleBar?.FindName("ToggleThemeButton") as Button;
                 if (toggleBtn != null)
                 {
-                    var isDark = this.AppTitleBar.ActualTheme == ElementTheme.Dark;
+                    var isDark = this.AppTitleBar?.ActualTheme == ElementTheme.Dark;
                     var glyph = isDark ? "☀" : "☾";
                     toggleBtn.Content = new FontIcon { Glyph = glyph, FontFamily = new FontFamily("Segoe UI Symbol") };
                 }
@@ -612,9 +611,9 @@ namespace BingPaper
                     if (res.Items.Count == 0) res.Items.Add(new ComboBoxItem { Content = "3840x2160", Tag = "_3840x2160.jpg" });
 
                     // determine configured default resolution or pick highest available for this aspect
-                    string configuredRes = null;
+                    string? configuredRes = null;
                     if (_config.TryGetValue("default_resolution", out var dr)) configuredRes = dr;
-                    string targetRes = null;
+                    string? targetRes = null;
                     if (!string.IsNullOrEmpty(configuredRes))
                     {
                         if (configuredRes == "720") targetRes = "1280x720";
@@ -692,7 +691,7 @@ namespace BingPaper
                 var nv = sender as NavigationView;
                 // 使用 Tag 控制页面索引（避免 SelectedIndex 受分组影响）
                 int idx = 0;
-                try { if (args?.SelectedItem is NavigationViewItem it && it.Tag != null) idx = int.Parse(it.Tag.ToString()); }
+                try { if (args?.SelectedItem is NavigationViewItem it && it.Tag != null) idx = int.Parse(it.Tag.ToString() ?? "0"); }
                 catch { idx = 0; }
                 var root = this.Content as FrameworkElement;
                 var todayHost = root?.FindName("TodayHost") as UIElement;
@@ -719,7 +718,7 @@ namespace BingPaper
                 {
                     try
                     {
-                        var dlText = root.FindName("DownloadFolderText") as TextBox;
+                        var dlText = root?.FindName("DownloadFolderText") as TextBox;
                         if (dlText != null) dlText.Text = WallpaperFolderPath;
                     }
                     catch { }
@@ -747,9 +746,9 @@ namespace BingPaper
                     try
                     {
                         // 切换到设置壁纸页时填充默认值（使用当前下载目录）
-                        var sText = root.FindName("SlideshowFolderText") as TextBox;
+                        var sText = root?.FindName("SlideshowFolderText") as TextBox;
                         if (sText != null) sText.Text = WallpaperFolderPath;
-                        var interval = root.FindName("SlideshowIntervalCombo") as ComboBox;
+                        var interval = root?.FindName("SlideshowIntervalCombo") as ComboBox;
                         if (interval != null)
                         {
                             var ivv = _config.TryGetValue("slideshow_interval", out var iv) && int.TryParse(iv, out var x) ? x : 1800;
@@ -758,12 +757,12 @@ namespace BingPaper
                                 if (interval.Items[i] is ComboBoxItem ci && (ci.Tag as string) == ivv.ToString()) { interval.SelectedIndex = i; break; }
                             }
                         }
-                        var shuffle = root.FindName("ShuffleCheck") as ToggleSwitch; if (shuffle != null && _config.TryGetValue("slideshow_shuffle", out var sh)) shuffle.IsOn = sh.Equals("true", StringComparison.OrdinalIgnoreCase);
-                        var fill = root.FindName("FillModeCombo") as ComboBox; if (fill != null && _config.TryGetValue("slideshow_fill", out var f))
+                        var shuffle = root?.FindName("ShuffleCheck") as ToggleSwitch; if (shuffle != null && _config.TryGetValue("slideshow_shuffle", out var sh)) shuffle.IsOn = sh.Equals("true", StringComparison.OrdinalIgnoreCase);
+                        var fill = root?.FindName("FillModeCombo") as ComboBox; if (fill != null && _config.TryGetValue("slideshow_fill", out var f))
                         {
                             foreach (ComboBoxItem it in fill.Items) { if (it.Tag?.ToString() == f) { fill.SelectedItem = it; break; } }
                         }
-                        var setacc = root.FindName("SetAccentCheck") as CheckBox; if (setacc != null && _config.TryGetValue("slideshow_setacc", out var sa)) setacc.IsChecked = sa.Equals("true", StringComparison.OrdinalIgnoreCase);
+                        var setacc = root?.FindName("SetAccentCheck") as CheckBox; if (setacc != null && _config.TryGetValue("slideshow_setacc", out var sa)) setacc.IsChecked = sa.Equals("true", StringComparison.OrdinalIgnoreCase);
                     }
                     catch { }
                 }
@@ -867,7 +866,7 @@ namespace BingPaper
                             foreach (var a in aspectSet.OrderBy(x => x)) { aspect.Items.Add(new ComboBoxItem { Content = a }); }
 
                             // try to select configured default aspect first, then 16:9
-                            string configuredAspect = null;
+                            string? configuredAspect = null;
                             if (_config.TryGetValue("default_aspect", out var da)) configuredAspect = da;
                             if (!string.IsNullOrEmpty(configuredAspect))
                             {
@@ -902,10 +901,10 @@ namespace BingPaper
                                 }
 
                                 // select configured default resolution if present, otherwise pick highest available for this aspect
-                                string configuredRes = null;
+                                string? configuredRes = null;
                                 if (_config.TryGetValue("default_resolution", out var dr)) configuredRes = dr;
                                 // map legacy tokens to actual resolution strings
-                                string targetRes = null;
+                                string? targetRes = null;
                                 if (!string.IsNullOrEmpty(configuredRes))
                                 {
                                     if (configuredRes == "720") targetRes = "1280x720";
@@ -1028,7 +1027,7 @@ namespace BingPaper
                 {
                     var first = images[0];
                     var urlBase = first.GetProperty("urlbase").GetString();
-                    string title = null;
+                    string? title = null;
                     if (first.TryGetProperty("copyright", out var cp)) title = cp.GetString();
                     else if (first.TryGetProperty("title", out var t)) title = t.GetString();
 
@@ -1100,7 +1099,7 @@ namespace BingPaper
                 var root = this.Content as FrameworkElement;
                 if (root == null) return;
 
-                Button btn = sender as Button;
+                Button? btn = sender as Button;
                 if (btn != null)
                 {
                     // 移动指示器到目标按钮并高亮
@@ -1155,9 +1154,9 @@ namespace BingPaper
                 if (segGrid == null || sel == null || selTrans == null || btn == null) return;
 
                 int colIndex = 2;
-                var b720 = root.FindName("Btn720") as Button;
-                var b1080 = root.FindName("Btn1080") as Button;
-                var buhd = root.FindName("BtnUHD") as Button;
+                var b720 = root?.FindName("Btn720") as Button;
+                var b1080 = root?.FindName("Btn1080") as Button;
+                var buhd = root?.FindName("BtnUHD") as Button;
                 if (btn == b720) colIndex = 0; else if (btn == b1080) colIndex = 1; else colIndex = 2;
 
                 // 计算列宽并设置指示器宽度与位置
@@ -1284,7 +1283,7 @@ namespace BingPaper
             {
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 var dq = this.DispatcherQueue;
-                        System.Threading.Timer timer = null;
+                        System.Threading.Timer? timer = null;
                 timer = new System.Threading.Timer(_ =>
                 {
                     var t = Math.Min(1.0, sw.Elapsed.TotalMilliseconds / Math.Max(1, durationMs));
@@ -1390,7 +1389,7 @@ private void MainWindow_Loaded(object sender, RoutedEventArgs e)
                 if (segGrid == null || sel == null || selTrans == null) return;
 
                 // 优先使用实际按钮 BtnUHD，若不存在则回退到 Btn1080，或 SegGrid 中第一个 Btn* 子元素
-                FrameworkElement target = root?.FindName("BtnUHD") as FrameworkElement;
+                FrameworkElement? target = root?.FindName("BtnUHD") as FrameworkElement;
                 if (target == null) target = root?.FindName("Btn1080") as FrameworkElement;
                 if (target == null)
                 {
@@ -1443,7 +1442,7 @@ private void MainWindow_Loaded(object sender, RoutedEventArgs e)
 
 
 // save wallpaper helper
-private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, string suggestedName)
+private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, string suggestedName)
 {
     try
     {
@@ -1575,7 +1574,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
                 if (btn1080 != null) { btn1080.Background = transparent; btn1080.Foreground = fgHigh; }
                 if (btnUHD != null) { btnUHD.Background = transparent; btnUHD.Foreground = fgHigh; }
 
-                Button sel = null;
+                Button? sel = null;
                 if (buttonName == "Btn720") sel = btn720;
                 else if (buttonName == "Btn1080") sel = btn1080;
                 else sel = btnUHD;
@@ -1900,7 +1899,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
             try
             {
                 // 1. 设置系统背景材质
-                Microsoft.UI.Xaml.Media.SystemBackdrop backdrop = null;
+                Microsoft.UI.Xaml.Media.SystemBackdrop? backdrop = null;
                 if (string.Equals(backdropType, "Mica", StringComparison.OrdinalIgnoreCase))
                 {
                     backdrop = new MicaBackdrop();
@@ -2158,11 +2157,11 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
 
                     var aspectCb = root?.FindName("AspectRatioCombo") as ComboBox;
                     var resCb = root?.FindName("ResolutionCombo") as ComboBox;
-                    string selAspect = (aspectCb?.SelectedItem as ComboBoxItem)?.Content as string;
+                    string? selAspect = (aspectCb?.SelectedItem as ComboBoxItem)?.Content as string;
                     string selRes = (resCb?.SelectedItem as ComboBoxItem)?.Content as string ?? "3840x2160";
 
                     var localXml = Path.Combine(AppContext.BaseDirectory, "Assets", "list.xml");
-                    XDocument localDoc = null;
+                    XDocument? localDoc = null;
                     int totalWallpapersInList = 0;
                     int totalResolutionGroups = 0;
                     try { if (status != null) status.Text = $"尝试读取 Assets/list.xml，默认路径: {localXml}，输出目录: {AppContext.BaseDirectory}"; } catch { }
@@ -2182,7 +2181,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
                     }
                     catch { }
 
-                    string usedPath = null;
+                    string? usedPath = null;
                     foreach (var p in candidatePaths)
                     {
                         try
@@ -2231,7 +2230,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
                         {
                             try
                             {
-                                XElement node = null;
+                                XElement? node = null;
                             if (localDoc != null)
                             {
                                 try
@@ -2338,7 +2337,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
                     {
                         try
                         {
-                            var chosenRes = (root?.FindName("ResolutionCombo") as ComboBox)?.SelectedItem is ComboBoxItem rci ? (rci.Content as string) : "3840x2160";
+                            var chosenRes = (root?.FindName("ResolutionCombo") as ComboBox)?.SelectedItem is ComboBoxItem rci ? (rci.Content as string) ?? "3840x2160" : "3840x2160";
 
                             string datePart = DateTime.Now.ToString("yyyy-MM-dd");
                             try
@@ -2374,7 +2373,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
 
                             // 尝试从 Assets/list.xml 查找当天的 URL（优先级高于 Image.Source）
                             var localXml = Path.Combine(AppContext.BaseDirectory, "Assets", "list.xml");
-                            XDocument localDoc = null;
+                            XDocument? localDoc = null;
                             var candidatePaths = new List<string>
                             {
                                 Path.Combine(AppContext.BaseDirectory, "Assets", "list.xml"),
@@ -2388,7 +2387,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
                             }
                             catch { }
 
-                            string usedPath = null;
+                            string? usedPath = null;
                             foreach (var p in candidatePaths)
                             {
                                 try
@@ -2404,7 +2403,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
                                 catch { }
                             }
 
-                            string urlStr = null;
+                            string? urlStr = null;
                             if (localDoc != null)
                             {
                                 try
@@ -2654,7 +2653,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
         {
             try
             {
-                var exe = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                var exe = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName;
                 var key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Run", true);
                 if (key == null) return;
                 var name = "BingPaper";
@@ -2983,7 +2982,7 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
                 var zipUrl = "https://github.com/niumoo/bing-wallpaper/archive/refs/heads/main.zip";
 
                 // 下载 zip（404 时等待重试，最多 5 次）
-                byte[] zipBytes = null;
+                byte[]? zipBytes = null;
                 for (int attempt = 0; attempt < 5; attempt++)
                 {
                     try
@@ -3106,13 +3105,13 @@ private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, stri
                     catch
                     {
                         userDoc = new XDocument(new XElement("wallpapers"));
-                        userRoot = userDoc.Root;
+                        userRoot = userDoc.Root ?? new XElement("wallpapers");
                     }
                 }
                 else
                 {
                     userDoc = new XDocument(new XElement("wallpapers"));
-                    userRoot = userDoc.Root;
+                    userRoot = userDoc.Root ?? new XElement("wallpapers");
                 }
 
                 int added = 0;

@@ -123,7 +123,6 @@
   <data name="MigrateWallpaperTitle" xml:space="preserve"><value>桌布資料夾遷移</value></data>
   <data name="MigrateWallpaperAsk" xml:space="preserve"><value>偵測到舊桌布資料夾，是否遷移至新位置？</value></data>
   <data name="SettingsSavedRestartHint" xml:space="preserve"><value>已儲存設定，部分更改將在重啟後生效</value></data>
-  <data name="SettingsExitApp" xml:space="preserve"><value>關閉軟體</value></data>
   <data name="AboutVersionLabel" xml:space="preserve"><value>版本</value></data>
   <data name="AboutDescriptionFull" xml:space="preserve"><value>Bing 每日桌布下載與管理工具，開源、輕量、跨平台相容。</value></data>
   <data name="AboutOpenLinks" xml:space="preserve"><value>開啟友好連結頁面</value></data>

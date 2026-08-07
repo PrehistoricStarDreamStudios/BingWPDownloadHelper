@@ -15,8 +15,8 @@ namespace BingPaper
         static void Main(string[] args)
         {
             string exePath = Environment.ProcessPath ?? "";
-            string exeDir = Path.GetDirectoryName(exePath);
-            string logPath = Path.Combine(exeDir ?? "", "error.log");
+            string exeDir = Path.GetDirectoryName(exePath) ?? "";
+            string logPath = Path.Combine(exeDir, "error.log");
 
             try
             {

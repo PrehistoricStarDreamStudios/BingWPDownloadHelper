@@ -34,8 +34,6 @@ namespace BingPaper
     /// </summary>
     public partial class App : Application
     {
-        private Window? _window;
-
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -134,7 +132,6 @@ namespace BingPaper
             }
 
             string localPath = imagePath;
-            bool downloadedTemp = false;
             try
             {
                 if (imagePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || imagePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -150,7 +147,6 @@ namespace BingPaper
                             var tmp = Path.Combine(Path.GetTempPath(), "BingPaper_" + Guid.NewGuid().ToString() + ext);
                             File.WriteAllBytes(tmp, bytes);
                             localPath = tmp;
-                            downloadedTemp = true;
                             Log("Downloaded to: " + localPath);
                         }
                     }
@@ -166,7 +162,7 @@ namespace BingPaper
                 {
                     var clsid = new Guid("C2CF3110-460E-4FC1-B9D0-8A0D4F2E2F7A"); // CLSID_DesktopWallpaper
                     var type = Type.GetTypeFromCLSID(clsid);
-                    var obj = Activator.CreateInstance(type);
+                    var obj = type != null ? Activator.CreateInstance(type) : null;
                     if (obj != null)
                     {
                         IntPtr pUnk = IntPtr.Zero;
@@ -176,7 +172,7 @@ namespace BingPaper
                             var dw = (IDesktopWallpaper)Marshal.GetTypedObjectForIUnknown(pUnk, typeof(IDesktopWallpaper));
                             try
                             {
-                                dw.SetWallpaper(null, localPath);
+                                dw.SetWallpaper(null!, localPath);
                                 dw.SetPosition(DESKTOP_WALLPAPER_POSITION.DWPOS_FILL);
                                 Log("IDesktopWallpaper applied: " + localPath);
                                 try { Marshal.ReleaseComObject(dw); } catch { }
@@ -250,7 +246,7 @@ namespace BingPaper
                 {
                     var clsidActive = new Guid("75048700-EF1F-11D0-9888-006097DEACF9");
                     var typeA = Type.GetTypeFromCLSID(clsidActive);
-                    var objA = Activator.CreateInstance(typeA);
+                    var objA = typeA != null ? Activator.CreateInstance(typeA) : null;
                     if (objA != null)
                     {
                         try
@@ -322,7 +318,7 @@ namespace BingPaper
                 // 创建 IDesktopWallpaper COM 对象
                 var clsid = new Guid("C2CF3110-460E-4FC1-B9D0-8A0D4F2E2F7A");
                 var type = Type.GetTypeFromCLSID(clsid);
-                var obj = Activator.CreateInstance(type);
+                var obj = type != null ? Activator.CreateInstance(type) : null;
                 if (obj == null) { Log("Failed to create DesktopWallpaper COM object"); return false; }
 
                 IntPtr pUnk = IntPtr.Zero;
