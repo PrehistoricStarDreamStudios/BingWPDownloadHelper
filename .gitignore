@@ -1,0 +1,31 @@
+## Build outputs
+bin/
+obj/
+
+## Visual Studio cache
+.vs/
+*.user
+*.suo
+
+## User-specific files
+*.user
+*.lock.json
+*.nuget.cache
+
+## Temporary/build artifacts
+*.log
+error.log
+sxs.etl
+debug_*.png
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+## MSIX packaging
+AppPackages/
+BundleArtifacts/
+*.appx
+*.msix
+*.pfx

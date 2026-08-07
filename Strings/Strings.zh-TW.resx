@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="AppTitle" xml:space="preserve"><value>Bing 桌布</value></data>
+  <data name="NavToday" xml:space="preserve"><value>今日桌布</value></data>
+  <data name="NavDownload" xml:space="preserve"><value>下載桌布</value></data>
+  <data name="NavSetWallpaper" xml:space="preserve"><value>設定桌布</value></data>
+  <data name="NavAbout" xml:space="preserve"><value>關於</value></data>
+  <data name="NavSettings" xml:space="preserve"><value>設定</value></data>
+  <data name="NavWallpaperPreview" xml:space="preserve"><value>桌布預覽</value></data>
+
+  <data name="ThemeDefault" xml:space="preserve"><value>預設</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>淺色</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>深色</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>跟隨系統</value></data>
+  <data name="ThemeBlue" xml:space="preserve"><value>藍色</value></data>
+  <data name="ThemeGreen" xml:space="preserve"><value>綠色</value></data>
+  <data name="ThemeOrange" xml:space="preserve"><value>橙色</value></data>
+  <data name="ThemePurple" xml:space="preserve"><value>紫色</value></data>
+  <data name="ThemePink" xml:space="preserve"><value>粉紅色</value></data>
+  <data name="ThemeColorLabel" xml:space="preserve"><value>顏色主題</value></data>
+  <data name="ThemeModeLabel" xml:space="preserve"><value>顯示模式</value></data>
+
+  <data name="SettingsTitle" xml:space="preserve"><value>設定</value></data>
+  <data name="SettingsLanguage" xml:space="preserve"><value>語言</value></data>
+  <data name="SettingsAutoStart" xml:space="preserve"><value>開機自動啟動</value></data>
+  <data name="SettingsAutoStartHide" xml:space="preserve"><value>啟動時最小化至系統匣</value></data>
+  <data name="SettingsCloseBehavior" xml:space="preserve"><value>關閉按鈕行為</value></data>
+  <data name="SettingsCloseToTray" xml:space="preserve"><value>最小化至系統匣</value></data>
+  <data name="SettingsCloseExit" xml:space="preserve"><value>結束程式</value></data>
+  <data name="SettingsExitApp" xml:space="preserve"><value>關閉軟體</value></data>
+  <data name="SettingsAskExitConfirm" xml:space="preserve"><value>關閉軟體前詢問</value></data>
+
+  <data name="TrayShow" xml:space="preserve"><value>顯示視窗</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>結束</value></data>
+  <data name="TrayTooltip" xml:space="preserve"><value>Bing 桌布</value></data>
+
+  <data name="DownloadThreads" xml:space="preserve"><value>下載執行緒數</value></data>
+  <data name="DownloadStart" xml:space="preserve"><value>開始下載</value></data>
+  <data name="DownloadStop" xml:space="preserve"><value>停止下載</value></data>
+  <data name="DownloadCategory" xml:space="preserve"><value>分類</value></data>
+  <data name="DownloadCategoryAll" xml:space="preserve"><value>全部</value></data>
+  <data name="DownloadCategoryPlaceholder" xml:space="preserve"><value>（待添加分類）</value></data>
+  <data name="DownloadProgress" xml:space="preserve"><value>進度</value></data>
+  <data name="DownloadDone" xml:space="preserve"><value>下載完成</value></data>
+  <data name="DownloadLog" xml:space="preserve"><value>紀錄</value></data>
+
+  <data name="WallpaperFolderLabel" xml:space="preserve"><value>桌布資料夾</value></data>
+  <data name="WallpaperBrowse" xml:space="preserve"><value>瀏覽...</value></data>
+  <data name="WallpaperApplySlideshow" xml:space="preserve"><value>設為幻燈片</value></data>
+  <data name="WallpaperInterval" xml:space="preserve"><value>切換間隔（秒）</value></data>
+  <data name="WallpaperShuffle" xml:space="preserve"><value>隨機播放</value></data>
+  <data name="WallpaperFillMode" xml:space="preserve"><value>填滿方式</value></data>
+  <data name="WallpaperApplySuccess" xml:space="preserve"><value>幻燈片設定成功</value></data>
+  <data name="WallpaperApplyFailed" xml:space="preserve"><value>設定失敗，請查看紀錄</value></data>
+
+  <data name="AboutTitle" xml:space="preserve"><value>關於</value></data>
+  <data name="AboutVersion" xml:space="preserve"><value>版本</value></data>
+  <data name="AboutDescription" xml:space="preserve"><value>Bing 每日桌布下載與管理工具</value></data>
+  <data name="AboutLinks" xml:space="preserve"><value>友好連結</value></data>
+  <data name="AboutMotto" xml:space="preserve"><value>每日格言</value></data>
+  <data name="AboutTools" xml:space="preserve"><value>小工具</value></data>
+  <data name="AboutAuthor" xml:space="preserve"><value>作者</value></data>
+  <data name="AboutOpenSource" xml:space="preserve"><value>開源協議</value></data>
+
+  <data name="ToolOptimizeMemory" xml:space="preserve"><value>優化記憶體</value></data>
+  <data name="ToolOptimizeMemoryDesc" xml:space="preserve"><value>將使用率較低的記憶體壓縮至虛擬記憶體分頁檔內</value></data>
+  <data name="ToolOptimizeMemoryRun" xml:space="preserve"><value>立即優化</value></data>
+  <data name="ToolOptimizeMemorySuccess" xml:space="preserve"><value>記憶體優化完成</value></data>
+  <data name="ToolOptimizeMemoryFailed" xml:space="preserve"><value>記憶體優化失敗</value></data>
+
+  <data name="Motto1" xml:space="preserve"><value>千里之行，始於足下。</value></data>
+  <data name="Motto2" xml:space="preserve"><value>學而時習之，不亦說乎？</value></data>
+  <data name="Motto3" xml:space="preserve"><value>不積跬步，無以至千里。</value></data>
+  <data name="Motto4" xml:space="preserve"><value>業精於勤，荒於嬉。</value></data>
+  <data name="Motto5" xml:space="preserve"><value>路漫漫其修遠兮，吾將上下而求索。</value></data>
+  <data name="Motto6" xml:space="preserve"><value>寶劍鋒從磨礪出，梅花香自苦寒來。</value></data>
+  <data name="Motto7" xml:space="preserve"><value>世上無難事，只要肯登攀。</value></data>
+  <data name="Motto8" xml:space="preserve"><value>海納百川，有容乃大。</value></data>
+  <data name="Motto9" xml:space="preserve"><value>天行健，君子以自強不息。</value></data>
+  <data name="Motto10" xml:space="preserve"><value>靜以修身，儉以養德。</value></data>
+
+  <data name="MsgConfirmExit" xml:space="preserve"><value>是否要結束 Bing 桌布？</value></data>
+  <data name="MsgConfirmTitle" xml:space="preserve"><value>確認</value></data>
+  <data name="MsgYes" xml:space="preserve"><value>是</value></data>
+  <data name="MsgNo" xml:space="preserve"><value>否</value></data>
+  <data name="MsgOK" xml:space="preserve"><value>確定</value></data>
+  <data name="MsgCancel" xml:space="preserve"><value>取消</value></data>
+
+  <data name="MigrateWallpaperTitle" xml:space="preserve"><value>桌布資料夾遷移</value></data>
+  <data name="MigrateWallpaperAsk" xml:space="preserve"><value>偵測到舊桌布資料夾，是否遷移至新位置？</value></data>
+  <data name="SettingsSavedRestartHint" xml:space="preserve"><value>已儲存設定，部分更改將在重啟後生效</value></data>
+  <data name="SettingsExitApp" xml:space="preserve"><value>關閉軟體</value></data>
+  <data name="AboutVersionLabel" xml:space="preserve"><value>版本</value></data>
+  <data name="AboutDescriptionFull" xml:space="preserve"><value>Bing 每日桌布下載與管理工具，開源、輕量、跨平台相容。</value></data>
+  <data name="AboutOpenLinks" xml:space="preserve"><value>開啟友好連結頁面</value></data>
+  <data name="AboutShowMotto" xml:space="preserve"><value>顯示今日格言</value></data>
+  <data name="AboutToolsSection" xml:space="preserve"><value>實用小工具</value></data>
+  <data name="AboutLanguageRegion" xml:space="preserve"><value>語言與地區</value></data>
+  <data name="LanguageAutoDetect" xml:space="preserve"><value>自動偵測（跟隨系統）</value></data>
+  <data name="NavTodayShort" xml:space="preserve"><value>今日</value></data>
+  <data name="NavDownloadShort" xml:space="preserve"><value>下載</value></data>
+  <data name="NavPreview" xml:space="preserve"><value>桌布預覽</value></data>
+  <data name="PreviewHoverHint" xml:space="preserve"><value>滑鼠停留以放大檢視</value></data>
+  <data name="PreviewCategoryAll" xml:space="preserve"><value>全部分類</value></data>
+  <data name="PreviewCategoryPlaceholder" xml:space="preserve"><value>（待添加分類）</value></data>
+  <data name="WallpaperFolderMismatch" xml:space="preserve"><value>桌布資料夾已變更，建議重啟應用程式</value></data>
+  <data name="LinksTitle" xml:space="preserve"><value>友情連結</value></data>
+  <data name="MsgNeedRestartForLanguage" xml:space="preserve"><value>語言變更需重新啟動應用程式才能生效，是否立即重新啟動？</value></data>
+  <data name="MsgRestartNow" xml:space="preserve"><value>立即重新啟動</value></data>
+  <data name="MsgRestartLater" xml:space="preserve"><value>稍後</value></data>
+  <data name="BackdropTypeLabel.Text" xml:space="preserve"><value>背景材質：</value></data>
+  <data name="BackdropMica.Content" xml:space="preserve"><value>Mica 雲母</value></data>
+  <data name="BackdropAcrylic.Content" xml:space="preserve"><value>Acrylic 壓克力</value></data>
+  <data name="BackdropNone.Content" xml:space="preserve"><value>無（不透明）</value></data>
+  <data name="TransparentBackgroundChk.Header" xml:space="preserve"><value>透明背景</value></data>
+  <data name="TransparentBackgroundChk.OffContent" xml:space="preserve"><value>關閉</value></data>
+  <data name="TransparentBackgroundChk.OnContent" xml:space="preserve"><value>開啟</value></data>
+</root>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="AppTitleText.Text" xml:space="preserve"><value>必應壁紙下載器</value></data>
+  <data name="CollapseNavBtn.ToolTipService.ToolTip" xml:space="preserve"><value>摺疊/展開目錄</value></data>
+  <data name="ToggleThemeBtn.ToolTipService.ToolTip" xml:space="preserve"><value>切換深淺模式</value></data>
+
+  <data name="NavToday.Content" xml:space="preserve"><value>今日壁紙</value></data>
+  <data name="NavDownload.Content" xml:space="preserve"><value>下載壁紙</value></data>
+  <data name="NavPreview.Content" xml:space="preserve"><value>壁紙預覽</value></data>
+  <data name="NavSetWallpaper.Content" xml:space="preserve"><value>設定壁紙</value></data>
+  <data name="NavAbout.Content" xml:space="preserve"><value>關於</value></data>
+  <data name="NavSettings.Content" xml:space="preserve"><value>軟件設定</value></data>
+
+  <data name="DownloadPageTitle.Text" xml:space="preserve"><value>下載壁紙</value></data>
+  <data name="DownloadFolderLabel.Text" xml:space="preserve"><value>下載目錄：</value></data>
+  <data name="BrowseBtn.ToolTipService.ToolTip" xml:space="preserve"><value>選擇資料夾</value></data>
+  <data name="BrowseBtn2.ToolTipService.ToolTip" xml:space="preserve"><value>選擇資料夾</value></data>
+  <data name="AspectRatioLabel.Text" xml:space="preserve"><value>比例：</value></data>
+  <data name="ResolutionLabel.Text" xml:space="preserve"><value> 解析度：</value></data>
+  <data name="DownloadHistoryChk.Content" xml:space="preserve"><value>下載歷史壁紙</value></data>
+  <data name="StartDateLabel.Text" xml:space="preserve"><value> 起始日期：</value></data>
+  <data name="StartDownloadBtn.Content" xml:space="preserve"><value>開始下載</value></data>
+
+  <data name="SetWallpaperPageTitle.Text" xml:space="preserve"><value>設定壁紙</value></data>
+  <data name="OpenPersonalizationBtn.Content" xml:space="preserve"><value>打開 Windows 個人化設定</value></data>
+  <data name="PersonalizationHint.Text" xml:space="preserve"><value>點擊上方按鈕可在 Windows 系統設定中配置壁紙、顏色、鎖屏等。下方為軟件提供的壁紙幻燈片批量設定：</value></data>
+  <data name="SlideshowFolderLabel.Text" xml:space="preserve"><value>幻燈片目錄：</value></data>
+  <data name="IntervalLabel.Text" xml:space="preserve"><value>切換間隔：</value></data>
+  <data name="Interval1m.Content" xml:space="preserve"><value>1 分鐘</value></data>
+  <data name="Interval10m.Content" xml:space="preserve"><value>10 分鐘</value></data>
+  <data name="Interval30m.Content" xml:space="preserve"><value>30 分鐘</value></data>
+  <data name="Interval1h.Content" xml:space="preserve"><value>1 小時</value></data>
+  <data name="Interval6h.Content" xml:space="preserve"><value>6 小時</value></data>
+  <data name="Interval1d.Content" xml:space="preserve"><value>1 天</value></data>
+  <data name="ShuffleChk.Content" xml:space="preserve"><value>亂序</value></data>
+  <data name="FillModeLabel.Text" xml:space="preserve"><value>填充方式：</value></data>
+  <data name="FillFill.Content" xml:space="preserve"><value>填充</value></data>
+  <data name="FillFit.Content" xml:space="preserve"><value>適應</value></data>
+  <data name="FillStretch.Content" xml:space="preserve"><value>拉伸</value></data>
+  <data name="FillTile.Content" xml:space="preserve"><value>平鋪</value></data>
+  <data name="FillCenter.Content" xml:space="preserve"><value>置中</value></data>
+  <data name="FillSpan.Content" xml:space="preserve"><value>跨區</value></data>
+  <data name="ApplySettingsBtn.Content" xml:space="preserve"><value>套用設定</value></data>
+
+  <data name="AppSettingsPageTitle.Text" xml:space="preserve"><value>軟件設定</value></data>
+  <data name="AutoStartChk.Content" xml:space="preserve"><value>開機自啟</value></data>
+  <data name="CloseBehaviorLabel.Text" xml:space="preserve"><value>關閉行為：</value></data>
+  <data name="CloseTray.Content" xml:space="preserve"><value>最小化至系統匣</value></data>
+  <data name="CloseExit.Content" xml:space="preserve"><value>結束軟件</value></data>
+  <data name="ThemeModeLabel.Text" xml:space="preserve"><value>主題模式：</value></data>
+  <data name="ThemeSystem.Content" xml:space="preserve"><value>跟隨系統</value></data>
+  <data name="ThemeLight.Content" xml:space="preserve"><value>淺色</value></data>
+  <data name="ThemeDark.Content" xml:space="preserve"><value>深色</value></data>
+  <data name="ColorThemeLabel.Text" xml:space="preserve"><value>顏色主題：</value></data>
+  <data name="ColorSystem.Content" xml:space="preserve"><value>跟隨系統</value></data>
+  <data name="ColorBlue.Content" xml:space="preserve"><value>藍色</value></data>
+  <data name="ColorGreen.Content" xml:space="preserve"><value>綠色</value></data>
+  <data name="ColorOrange.Content" xml:space="preserve"><value>橙色</value></data>
+  <data name="ColorPurple.Content" xml:space="preserve"><value>紫色</value></data>
+  <data name="ColorPink.Content" xml:space="preserve"><value>粉色</value></data>
+  <data name="DownloadThreadsLabel.Text" xml:space="preserve"><value>下載線程數：</value></data>
+  <data name="DownloadThreadsHint.Text" xml:space="preserve"><value>（1-32，預設 4）</value></data>
+  <data name="LanguageLabel.Text" xml:space="preserve"><value>顯示語言：</value></data>
+  <data name="LangZhCN.Content" xml:space="preserve"><value>简体中文（中国大陆）</value></data>
+  <data name="LangZhHK.Content" xml:space="preserve"><value>繁體中文（中國香港、中國澳門）</value></data>
+  <data name="LangZhTW.Content" xml:space="preserve"><value>繁體中文（中國台灣）</value></data>
+  <data name="LangEnUS.Content" xml:space="preserve"><value>English (United States)</value></data>
+  <data name="LangEnGB.Content" xml:space="preserve"><value>English (United Kingdom)</value></data>
+  <data name="AutoUpdateListChk.Content" xml:space="preserve"><value>自動更新列表（每日從 GitHub 拉取並補充未分類壁紙）</value></data>
+  <data name="CheckUpdateNowBtn.Content" xml:space="preserve"><value>立即檢查更新</value></data>
+  <data name="DefaultListLabel.Text" xml:space="preserve"><value>預設列表：</value></data>
+  <data name="ListLocal.Content" xml:space="preserve"><value>本地列表</value></data>
+  <data name="ApiSourceLabel.Text" xml:space="preserve"><value>API 獲取：</value></data>
+  <data name="ApiBing.Content" xml:space="preserve"><value>必應</value></data>
+  <data name="SaveSettingsBtn.Content" xml:space="preserve"><value>儲存設定</value></data>
+
+  <data name="AboutPageTitle.Text" xml:space="preserve"><value>關於</value></data>
+  <data name="AboutAuthorExpander.Header" xml:space="preserve"><value>關於作者</value></data>
+  <data name="AboutBiliBtn.Content" xml:space="preserve"><value>B站</value></data>
+  <data name="AboutMailBtn.Content" xml:space="preserve"><value>郵箱</value></data>
+  <data name="AboutProjectExpander.Header" xml:space="preserve"><value>關於本項目</value></data>
+  <data name="AboutProjectGitBtn.Content" xml:space="preserve"><value>項目GitHub</value></data>
+
+  <data name="PreviewPageTitle.Text" xml:space="preserve"><value>壁紙預覽</value></data>
+  <data name="TagFilterLabel.Text" xml:space="preserve"><value>標籤篩選：</value></data>
+
+  <!-- 關於頁面：友情連結 / 每日格言 / 實用小工具 -->
+  <data name="AboutVersionLabel.Text" xml:space="preserve"><value>版本 b0.1</value></data>
+  <data name="AboutDescriptionText.Text" xml:space="preserve"><value>Bing 每日桌布下載與管理工具，開源、輕量、跨平台相容。</value></data>
+  <data name="AboutLinksExpander.Header" xml:space="preserve"><value>友情連結</value></data>
+  <data name="AboutLinksHint.Text" xml:space="preserve"><value>點擊下方按鈕在系統預設瀏覽器中開啟：</value></data>
+  <data name="AboutLinksBtn.Content" xml:space="preserve"><value>友情連結主頁</value></data>
+  <data name="AboutBingBtn.Content" xml:space="preserve"><value>必應</value></data>
+  <data name="AboutMottoExpander.Header" xml:space="preserve"><value>每日格言</value></data>
+  <data name="AboutMottoHint.Text" xml:space="preserve"><value>點擊下方按鈕顯示今日格言</value></data>
+  <data name="AboutShowMottoBtn.Content" xml:space="preserve"><value>顯示今日格言</value></data>
+  <data name="AboutToolsExpander.Header" xml:space="preserve"><value>實用小工具</value></data>
+  <data name="ToolOptimizeMemoryDesc.Text" xml:space="preserve"><value>優化記憶體：將使用率較低的記憶體壓縮至虛擬記憶體分頁檔內。</value></data>
+  <data name="ToolOptimizeMemoryBtn.Content" xml:space="preserve"><value>立即優化</value></data>
+
+  <!-- Fluent Design ToggleSwitch keys（布林開關由 CheckBox 改為 ToggleSwitch） -->
+  <data name="AutoStartChk.Header" xml:space="preserve"><value>開機自啟</value></data>
+  <data name="AutoStartChk.OnContent" xml:space="preserve"><value>開啟</value></data>
+  <data name="AutoStartChk.OffContent" xml:space="preserve"><value>關閉</value></data>
+  <data name="AutoUpdateListChk.Header" xml:space="preserve"><value>自動更新列表（每日從 GitHub 拉取並補充未分類壁紙）</value></data>
+  <data name="AutoUpdateListChk.OnContent" xml:space="preserve"><value>開啟</value></data>
+  <data name="AutoUpdateListChk.OffContent" xml:space="preserve"><value>關閉</value></data>
+  <data name="DownloadHistoryChk.Header" xml:space="preserve"><value>下載歷史壁紙</value></data>
+  <data name="DownloadHistoryChk.OnContent" xml:space="preserve"><value>開啟</value></data>
+  <data name="DownloadHistoryChk.OffContent" xml:space="preserve"><value>關閉</value></data>
+  <data name="ShuffleChk.Header" xml:space="preserve"><value>亂序</value></data>
+  <data name="ShuffleChk.OnContent" xml:space="preserve"><value>開啟</value></data>
+  <data name="ShuffleChk.OffContent" xml:space="preserve"><value>關閉</value></data>
+</root>

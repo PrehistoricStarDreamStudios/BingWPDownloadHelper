@@ -1,6 +1,6 @@
 using System;
 
-namespace BingWPDLHelper
+namespace BingPaper
 {
     public static class TextBoxExtensions
     {

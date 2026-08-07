@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>BingPaper</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>true</WinUISDKReferences>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+    <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <DisableXamlGeneratedMain>true</DisableXamlGeneratedMain>
+    <DefineConstants>DISABLE_XAML_GENERATED_MAIN;DISABLE_WINDOWS_APP_SDK_AUTO_INITIALIZATION</DefineConstants>
+    
+    </PropertyGroup>
+  <ItemGroup>
+    <Content Remove="Assets\list.xml" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <PRIResource Include="Strings\zh-CN\Resources.resw">
+      <Culture>zh-CN</Culture>
+    </PRIResource>
+    <PRIResource Include="Strings\zh-TW\Resources.resw">
+      <Culture>zh-TW</Culture>
+    </PRIResource>
+    <PRIResource Include="Strings\zh-HK\Resources.resw">
+      <Culture>zh-HK</Culture>
+    </PRIResource>
+    <PRIResource Include="Strings\en-US\Resources.resw">
+      <Culture>en-US</Culture>
+    </PRIResource>
+    <PRIResource Include="Strings\en-GB\Resources.resw">
+      <Culture>en-GB</Culture>
+    </PRIResource>
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Content Include="Assets\SplashScreen.scale-200.png" />
+    <Content Include="Assets\LockScreenLogo.scale-200.png" />
+    <Content Include="Assets\Square150x150Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="Assets\list.xml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\appicon.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\appicon.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  
+  <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.WinUI" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
+    </ItemGroup>
+
+  <!-- Publish Properties -->
+  <PropertyGroup>
+    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
+    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <DefaultLanguage>zh-CN</DefaultLanguage>
+  </PropertyGroup>
+</Project>
