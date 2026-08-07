@@ -121,7 +121,7 @@ namespace BingPaper
 
         public static bool SetDesktopWallpaper(string imagePath)
         {
-            var logPath = Path.Combine(Path.GetTempPath(), "BingWPDLHelper_wallpaper.log");
+            var logPath = Path.Combine(Path.GetTempPath(), "BingPaper_wallpaper.log");
             void Log(string m)
             {
                 try { File.AppendAllText(logPath, DateTime.Now.ToString("o") + " " + m + Environment.NewLine); } catch { }
@@ -147,7 +147,7 @@ namespace BingPaper
                             var bytes = http.GetByteArrayAsync(imagePath).GetAwaiter().GetResult();
                             var ext = Path.GetExtension(new Uri(imagePath).AbsolutePath);
                             if (string.IsNullOrEmpty(ext)) ext = ".jpg";
-                            var tmp = Path.Combine(Path.GetTempPath(), "BingWPDLHelper_" + Guid.NewGuid().ToString() + ext);
+                            var tmp = Path.Combine(Path.GetTempPath(), "BingPaper_" + Guid.NewGuid().ToString() + ext);
                             File.WriteAllBytes(tmp, bytes);
                             localPath = tmp;
                             downloadedTemp = true;
@@ -284,7 +284,7 @@ namespace BingPaper
 
         public static bool SetDesktopSlideshow(string folderPath, uint intervalMs, bool shuffle, string position)
         {
-            var logPath = Path.Combine(Path.GetTempPath(), "BingWPDLHelper_slideshow.log");
+            var logPath = Path.Combine(Path.GetTempPath(), "BingPaper_slideshow.log");
             void Log(string m)
             {
                 try { File.AppendAllText(logPath, DateTime.Now.ToString("o") + " " + m + Environment.NewLine); } catch { }

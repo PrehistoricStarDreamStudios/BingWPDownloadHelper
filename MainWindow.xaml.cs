@@ -97,7 +97,7 @@ namespace BingPaper
                 {
                     try
                     {
-                        var tmp = Path.Combine(Path.GetTempPath(), "BingWPDLHelper_error.log");
+                        var tmp = Path.Combine(Path.GetTempPath(), "BingPaper_error.log");
                         File.AppendAllText(tmp, text + Environment.NewLine);
                     }
                     catch { }
@@ -1358,7 +1358,7 @@ namespace BingPaper
                 bool ok = App.SetDesktopSlideshow(folder, intervalMs, shuffle, fillMode);
                 if (status != null) status.Text = ok
                     ? "幻灯片已设置成功。"
-                    : "设置幻灯片失败，请查看日志（%TEMP%\\BingWPDLHelper_slideshow.log）。";
+                    : "设置幻灯片失败，请查看日志（%TEMP%\\BingPaper_slideshow.log）。";
 
                 // 保存设置到配置文件
                 _config["slideshow_interval"] = intervalMs.ToString();
