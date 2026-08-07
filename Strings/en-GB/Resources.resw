@@ -145,4 +145,13 @@
   <data name="ShuffleChk.Header" xml:space="preserve"><value>Shuffle</value></data>
   <data name="ShuffleChk.OnContent" xml:space="preserve"><value>On</value></data>
   <data name="ShuffleChk.OffContent" xml:space="preserve"><value>Off</value></data>
+
+  <!-- Fluent Design backdrop material (Mica/Acrylic/None + transparent background) -->
+  <data name="BackdropTypeLabel.Text" xml:space="preserve"><value>Background material:</value></data>
+  <data name="BackdropMica.Content" xml:space="preserve"><value>Mica</value></data>
+  <data name="BackdropAcrylic.Content" xml:space="preserve"><value>Acrylic</value></data>
+  <data name="BackdropNone.Content" xml:space="preserve"><value>None (opaque)</value></data>
+  <data name="TransparentBackgroundChk.Header" xml:space="preserve"><value>Transparent background</value></data>
+  <data name="TransparentBackgroundChk.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="TransparentBackgroundChk.OffContent" xml:space="preserve"><value>Off</value></data>
 </root>

@@ -145,4 +145,13 @@
   <data name="ShuffleChk.Header" xml:space="preserve"><value>乱序</value></data>
   <data name="ShuffleChk.OnContent" xml:space="preserve"><value>开启</value></data>
   <data name="ShuffleChk.OffContent" xml:space="preserve"><value>关闭</value></data>
+
+  <!-- Fluent Design 背景材质（Mica/Acrylic/None + 透明背景） -->
+  <data name="BackdropTypeLabel.Text" xml:space="preserve"><value>背景材质：</value></data>
+  <data name="BackdropMica.Content" xml:space="preserve"><value>Mica 云母</value></data>
+  <data name="BackdropAcrylic.Content" xml:space="preserve"><value>Acrylic 亚克力</value></data>
+  <data name="BackdropNone.Content" xml:space="preserve"><value>无（不透明）</value></data>
+  <data name="TransparentBackgroundChk.Header" xml:space="preserve"><value>透明背景</value></data>
+  <data name="TransparentBackgroundChk.OnContent" xml:space="preserve"><value>开启</value></data>
+  <data name="TransparentBackgroundChk.OffContent" xml:space="preserve"><value>关闭</value></data>
 </root>
