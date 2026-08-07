@@ -294,7 +294,7 @@ namespace BingPaper
             try
             {
                 var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                AppFolderPath = Path.Combine(roaming, "WPDLHelper");
+                AppFolderPath = Path.Combine(roaming, "BingPaper");
                 WallpaperFolderPath = Path.Combine(AppFolderPath, "Wallpaper");
                 ConfigFilePath = Path.Combine(AppFolderPath, "config.ini");
                 if (!Directory.Exists(AppFolderPath)) Directory.CreateDirectory(AppFolderPath);

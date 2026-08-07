@@ -46,9 +46,12 @@ namespace BingPaper
         /// <summary>
         /// Invoked when the application is launched.
         /// </summary>
-        /// <param name="args">Details about the launch request and process.</param>
+        /// <param name="args">Details about the launch request.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
+            // 非打包模式下，在 OnLaunched 中创建并激活主窗口
+            var window = new MainWindow();
+            window.Activate();
         }
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]

@@ -34,7 +34,7 @@ namespace BingPaper
                     var syncContext = new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread());
                     SynchronizationContext.SetSynchronizationContext(syncContext);
                     WriteLog(logPath, "SynchronizationContext set");
-                    
+
                     try
                     {
                         var app = new App();
@@ -43,39 +43,6 @@ namespace BingPaper
                     catch (Exception ex)
                     {
                         WriteLog(logPath, $"App creation error: {ex}");
-                        throw;
-                    }
-                    
-                    try
-                    {
-                        var window = new MainWindow();
-                        WriteLog(logPath, "MainWindow created");
-                        // 检测 --minimized 参数：开机静默启动时不显示窗口，直接最小化到托盘
-                        bool startMinimized = args != null && args.Any(a => string.Equals(a, "--minimized", StringComparison.OrdinalIgnoreCase));
-                        if (!startMinimized)
-                        {
-                            window.Activate();
-                            WriteLog(logPath, "Window activated");
-                        }
-                        else
-                        {
-                            WriteLog(logPath, "Starting minimized to tray (--minimized)");
-                            // 不激活窗口，构造函数内已初始化托盘，窗口保持隐藏
-                            try
-                            {
-                                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                                var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
-                                Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId).Hide();
-                            }
-                            catch { }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        WriteLog(logPath, $"MainWindow creation error: {ex}");
-                        WriteLog(logPath, $"Exception type: {ex.GetType().FullName}");
-                        WriteLog(logPath, $"Exception message: {ex.Message}");
-                        WriteLog(logPath, $"Stack trace: {ex.StackTrace}");
                         throw;
                     }
                 });
