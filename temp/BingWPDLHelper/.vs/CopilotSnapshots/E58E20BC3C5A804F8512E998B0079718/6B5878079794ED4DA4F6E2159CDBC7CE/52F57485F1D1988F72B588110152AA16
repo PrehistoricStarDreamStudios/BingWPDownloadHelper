@@ -1,0 +1,204 @@
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+using Microsoft.UI.Xaml.Shapes;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.Activation;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Security.Principal;
+using System.Reflection;
+using Microsoft.Win32;
+
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace BingWPDLHelper
+{
+    /// <summary>
+    /// Provides application-specific behavior to supplement the default Application class.
+    /// </summary>
+    public partial class App : Application
+    {
+        private Window? _window;
+
+        /// <summary>
+        /// Initializes the singleton application object.  This is the first line of authored code
+        /// executed, and as such is the logical equivalent of main() or WinMain().
+        /// </summary>
+        public App()
+        {
+            InitializeComponent();
+        }
+
+        /// <summary>
+        /// Invoked when the application is launched.
+        /// </summary>
+        /// <param name="args">Details about the launch request and process.</param>
+        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        {
+            try
+            {
+                // If not elevated, attempt to relaunch elevated. If user declines, continue non-elevated.
+                if (!IsProcessElevated())
+                {
+                    try
+                    {
+                        var exe = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
+                        if (!string.IsNullOrEmpty(exe))
+                        {
+                            var psi = new ProcessStartInfo
+                            {
+                                FileName = exe,
+                                UseShellExecute = true,
+                                Verb = "runas"
+                            };
+                            Process.Start(psi);
+                            Environment.Exit(0);
+                            return;
+                        }
+                    }
+                    catch { /* user refused elevation or failed; continue */ }
+                }
+            }
+            catch { }
+
+            _window = new MainWindow();
+            _window.Activate();
+
+            // tray removed per user request
+        }
+
+        private bool IsProcessElevated()
+        {
+            try
+            {
+                using var identity = WindowsIdentity.GetCurrent();
+                var principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+            catch { return false; }
+        }
+
+        private void TryInvokeMainWindowAction(Action<MainWindow> act)
+        {
+            try
+            {
+                if (_window is MainWindow mw)
+                {
+                    act(mw);
+                }
+            }
+            catch { }
+        }
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+
+        private const int SPI_SETDESKWALLPAPER = 20;
+        private const int SPIF_UPDATEINIFILE = 0x01;
+        private const int SPIF_SENDWININICHANGE = 0x02;
+
+        // 重写设置壁纸：加入诊断日志与 ActiveDesktop 回退以找出为何会打开“设置”应用。
+        public static bool SetDesktopWallpaper(string imagePath)
+        {
+            var logPath = Path.Combine(Path.GetTempPath(), "BingWPDLHelper_wallpaper.log");
+            void Log(string m)
+            {
+                try { File.AppendAllText(logPath, DateTime.Now.ToString("o") + " " + m + Environment.NewLine); } catch { }
+            }
+
+            if (string.IsNullOrEmpty(imagePath) || !File.Exists(imagePath))
+            {
+                Log("invalid path: " + imagePath);
+                return false;
+            }
+
+            try
+            {
+
+                // 1) 直接调用 SystemParametersInfo
+                int res = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, imagePath, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+                Log($"SPI_SETDESKWALLPAPER result={res}, lastError={Marshal.GetLastWin32Error()}");
+                if (res != 0) return true;
+            }
+            catch (Exception ex)
+            {
+                Log("SPI exception: " + ex.Message);
+            }
+
+            // 2) 写入注册表并再试一次（老方法）
+            try
+            {
+                try
+                {
+                    using (var key = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", true))
+                    {
+                        if (key != null)
+                        {
+                            key.SetValue("Wallpaper", imagePath);
+                            key.SetValue("WallpaperStyle", "2");
+                            key.SetValue("TileWallpaper", "0");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log("Registry write exception: " + ex.Message);
+                }
+
+                int res2 = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, imagePath, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+                Log($"Registry+SPI result={res2}, lastError={Marshal.GetLastWin32Error()}");
+                if (res2 != 0) return true;
+            }
+            catch (Exception ex)
+            {
+                Log("Registry+SPI exception: " + ex.Message);
+            }
+
+            // 3) 回退到旧的 ActiveDesktop COM 接口（控制面板风格），通过反射调用避免复杂接口声明
+            try
+            {
+                var clsid = new Guid("75048700-EF1F-11D0-9888-006097DEACF9"); // CLSID_ActiveDesktop
+                var type = Type.GetTypeFromCLSID(clsid);
+                var obj = Activator.CreateInstance(type);
+                if (obj != null)
+                {
+                    try
+                    {
+                        type.InvokeMember("SetWallpaper", BindingFlags.InvokeMethod, null, obj, new object[] { imagePath, 0 });
+                        type.InvokeMember("ApplyChanges", BindingFlags.InvokeMethod, null, obj, new object[] { 1 });
+                        Log("ActiveDesktop.SetWallpaper applied");
+                        Marshal.ReleaseComObject(obj);
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log("ActiveDesktop invoke exception: " + ex.Message);
+                        try { Marshal.ReleaseComObject(obj); } catch { }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log("ActiveDesktop exception: " + ex.Message);
+            }
+
+            Log("All methods failed");
+            return false;
+        }
+    }
+}

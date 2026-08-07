@@ -1,0 +1,5 @@
+MainPackage=E:\Users\Administrator\source\repos\BingWPDLHelper\bin\x64\Release\win-x64\BingWPDLHelper_1.0.0.0_x64.msix
+ResourcePack=E:\Users\Administrator\source\repos\BingWPDLHelper\bin\x64\Release\win-x64\BingWPDLHelper_1.0.0.0_scale-100.msix
+ResourcePack=E:\Users\Administrator\source\repos\BingWPDLHelper\bin\x64\Release\win-x64\BingWPDLHelper_1.0.0.0_scale-125.msix
+ResourcePack=E:\Users\Administrator\source\repos\BingWPDLHelper\bin\x64\Release\win-x64\BingWPDLHelper_1.0.0.0_scale-150.msix
+ResourcePack=E:\Users\Administrator\source\repos\BingWPDLHelper\bin\x64\Release\win-x64\BingWPDLHelper_1.0.0.0_scale-400.msix

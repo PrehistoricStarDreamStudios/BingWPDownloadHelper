@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "BingPaper (Package)": {
+      "commandName": "MsixPackage",
+      "nativeDebugging": true
+    },
+    "BingPaper (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -1,0 +1,127 @@
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Runtime.InteropServices;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace BingWPDLHelper
+{
+    /// <summary>
+    /// An empty window that can be used on its own or navigated to within a Frame.
+    /// </summary>
+    public sealed partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            // 在初始化后立刻设置自定义标题栏为拖动区域
+            try
+            {
+                var rootInit = this.Content as FrameworkElement;
+                var dragRegionInit = rootInit?.FindName("DragRegion") as UIElement;
+                if (dragRegionInit != null)
+                {
+                    this.SetTitleBar(dragRegionInit);
+                }
+                var toggleInit = rootInit?.FindName("ToggleThemeButton") as Button;
+                if (toggleInit != null)
+                {
+                    toggleInit.IsHitTestVisible = true;
+                }
+            }
+            catch { }
+
+            // 获取主显示器分辨率
+            int screenWidth = GetSystemMetrics(0); // SM_CXSCREEN
+            int screenHeight = GetSystemMetrics(1); // SM_CYSCREEN
+
+            int longSide = Math.Max(screenWidth, screenHeight);
+            int shortSide = Math.Min(screenWidth, screenHeight);
+
+            // 按照要求：长的50% * 宽的60%
+            int targetWidth = (int)Math.Round(longSide * 0.5);
+            int targetHeight = (int)Math.Round(shortSide * 0.6);
+
+            // WinUI Window 不直接暴露 Width/Height，使用 WinRT.Interop 获取 HWND 并调用 SetWindowPos 设置尺寸
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            const uint SWP_NOZORDER = 0x0004;
+            const uint SWP_NOMOVE = 0x0002;
+            SetWindowPos(hwnd, IntPtr.Zero, 0, 0, targetWidth, targetHeight, SWP_NOZORDER | SWP_NOMOVE);
+
+            // 扩展内容到标题栏并使用自定义标题栏作为可拖动区域
+            this.ExtendsContentIntoTitleBar = true;
+            // 在窗口激活后设置 TitleBar，使用运行时查找以避免对生成字段的编译时引用
+            this.Activated += (_, __) =>
+            {
+                try
+                {
+                    var root = this.Content as FrameworkElement;
+                    var dragRegion = root?.FindName("DragRegion") as UIElement;
+                    if (dragRegion != null)
+                    {
+                        this.SetTitleBar(dragRegion);
+                    }
+                }
+                catch { }
+            };
+
+            // 初始时设置 ToggleThemeButton 图标（若存在），基于窗口实际主题
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var toggleBtn = root?.FindName("ToggleThemeButton") as Button;
+                if (toggleBtn != null)
+                {
+                    var isDark = (root.ActualTheme == ElementTheme.Dark) || (Application.Current.RequestedTheme == ApplicationTheme.Dark);
+                    var glyph = isDark ? "☀" : "☾";
+                    toggleBtn.Content = new FontIcon { Glyph = glyph, FontFamily = new FontFamily("Segoe UI Symbol") };
+                }
+            }
+            catch { }
+        }
+
+        [DllImport("user32.dll")]
+        private static extern int GetSystemMetrics(int nIndex);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        private void ToggleThemeButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                if (root != null)
+                {
+                    // 切换窗口内容元素主题（局部切换）
+                    var current = root.RequestedTheme;
+                    root.RequestedTheme = current == ElementTheme.Dark ? ElementTheme.Light : ElementTheme.Dark;
+
+                    // 更新按钮图标：如果现在是深色则显示太阳表示可切换到浅色
+                    var toggleBtn = root.FindName("ToggleThemeButton") as Button;
+                    if (toggleBtn != null)
+                    {
+                        var isDark = root.RequestedTheme == ElementTheme.Dark;
+                        var glyph = isDark ? "☀" : "☾";
+                        toggleBtn.Content = new FontIcon { Glyph = glyph, FontFamily = new FontFamily("Segoe UI Symbol") };
+                    }
+                }
+            }
+            catch { }
+        }
+    }
+}

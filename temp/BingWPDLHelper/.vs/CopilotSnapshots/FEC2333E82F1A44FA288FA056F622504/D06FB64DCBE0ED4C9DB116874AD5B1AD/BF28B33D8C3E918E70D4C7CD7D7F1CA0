@@ -1,0 +1,344 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="BingWPDLHelper.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BingWPDLHelper"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="必应壁纸下载器">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.Resources>
+            <Storyboard x:Key="SelMoveAnimation">
+                <!-- placeholder; animation controlled from code-behind by Beginning animations on SelTransform.X and Sel.Width -->
+            </Storyboard>
+            <Style x:Key="CaptionButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="28" />
+                <Setter Property="Padding" Value="6" />
+                <Setter Property="Foreground" Value="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="CloseCaptionButtonStyle" TargetType="Button" BasedOn="{StaticResource CaptionButtonStyle}">
+                <Setter Property="Foreground" Value="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid x:Name="Root" Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Gallery-like NavigationView style (simplified and renamed) -->
+            <Style x:Key="GalleryNavigationViewStyle" TargetType="NavigationView">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="NavigationView">
+                            <Grid x:Name="RootGrid">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Left pane area -->
+                                <Border x:Name="PaneBorder" Grid.Column="0" Background="{TemplateBinding Background}">
+                                    <StackPanel>
+                                        <ContentPresenter x:Name="PaneHeaderPresenter" ContentTemplate="{TemplateBinding PaneHeaderTemplate}" Content="{TemplateBinding PaneHeader}" />
+                                        <ItemsPresenter x:Name="MenuItemsPresenter" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Content area -->
+                                <ContentPresenter x:Name="ContentPresenter" Grid.Column="1" Content="{TemplateBinding Content}" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Fluent 风格自定义标题栏 -->
+        <Border x:Name="AppTitleBar"
+                Grid.Row="0"
+                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                Padding="12,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- 左侧标题栏：折叠按钮放在标题最左侧，DragRegion 放在右侧以保留拖拽区域 -->
+                <Grid Grid.Column="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button x:Name="CollapseNavButtonLeft" Click="CollapseNavButton_Click" ToolTipService.ToolTip="收起/展开目录" Style="{StaticResource CaptionButtonStyle}" Margin="0,0,8,0">
+                        <TextBlock Text="≡" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    </Button>
+
+                    <Grid x:Name="DragRegion" Grid.Column="1" IsHitTestVisible="False">
+                        <TextBlock Text="必应壁纸下载器"
+                                   VerticalAlignment="Center"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold" />
+                    </Grid>
+                </Grid>
+
+                <!-- 右侧按钮组：折叠目录按钮 + 切换深浅模式 + 自定义系统按钮（最小化/最大化/关闭） -->
+                <StackPanel x:Name="CaptionHost" Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,160,0">
+                    <Button x:Name="ToggleThemeButton"
+                            Click="ToggleThemeButton_Click"
+                            ToolTipService.ToolTip="切换深浅模式"
+                            Style="{StaticResource CaptionButtonStyle}">
+                        <FontIcon x:Name="ToggleIcon" Glyph="☀" FontFamily="Segoe UI Symbol" FontSize="14" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <!-- 主内容区：今日壁纸界面（圆角图片 + 分辨率切换） -->
+            <Grid Margin="8,8,12,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <NavigationView x:Name="NavView" Grid.Column="0" PaneDisplayMode="Left" IsPaneOpen="True" SelectionChanged="NavView_SelectionChanged" CompactPaneLength="48" OpenPaneLength="240" IsPaneToggleButtonVisible="False" IsBackButtonVisible="Collapsed" IsSettingsVisible="False">
+                    <NavigationView.MenuItems>
+                        <NavigationViewItem Content="今日壁纸" Tag="0">
+                                                    <NavigationViewItem.Icon>
+                                                        <FontIcon Glyph="&#xE80F;" FontFamily="Segoe MDL2 Assets" />
+                                                    </NavigationViewItem.Icon>
+                                                </NavigationViewItem>
+                        <NavigationViewItem Content="下载壁纸" Tag="1">
+                                                    <NavigationViewItem.Icon>
+                                                        <FontIcon Glyph="&#xE896;" FontFamily="Segoe MDL2 Assets" />
+                                                    </NavigationViewItem.Icon>
+                                                </NavigationViewItem>
+                        <!-- ensure no invalid Icon names remain -->
+                        <NavigationViewItem>
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets" />
+                            </NavigationViewItem.Icon>
+                            <NavigationViewItem.Content>
+                                设置壁纸
+                            </NavigationViewItem.Content>
+                            <NavigationViewItem.Tag>2</NavigationViewItem.Tag>
+                        </NavigationViewItem>
+                        <NavigationViewItem>
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE946;" FontFamily="Segoe MDL2 Assets" />
+                            </NavigationViewItem.Icon>
+                            <NavigationViewItem.Content>
+                                关于
+                            </NavigationViewItem.Content>
+                            <NavigationViewItem.Tag>4</NavigationViewItem.Tag>
+                        </NavigationViewItem>
+                    </NavigationView.MenuItems>
+
+                    <NavigationView.FooterMenuItems>
+                        <NavigationViewItem Content="软件设置" Tag="3">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE713;" FontFamily="Segoe MDL2 Assets" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                    </NavigationView.FooterMenuItems>
+                </NavigationView>
+
+                <Frame x:Name="contentFrame" Grid.Column="1">
+                    <Grid>
+                        <!-- TodayHost and DownloadHost are sibling panels; switch Visibility from code-behind -->
+                        <Grid x:Name="TodayHost" Visibility="Visible">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Border Margin="5" CornerRadius="12" Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="4">
+                                <Image x:Name="MainImage" Stretch="UniformToFill" />
+                            </Border>
+
+                            <!-- 图片名称 -->
+                            <TextBlock x:Name="ImageTitle" Grid.Row="1" Text="" HorizontalAlignment="Center" Margin="8,8,8,0" FontSize="14" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+
+                        </Grid>
+
+                        <!-- 下载壁纸页面（准备中） -->
+                        <ScrollViewer x:Name="DownloadHost" Visibility="Collapsed" Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="下载壁纸" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="下载目录：" VerticalAlignment="Center" Grid.Column="0" />
+                                    <TextBox x:Name="DownloadFolderText" Grid.Column="1" IsReadOnly="False" Width="420" Margin="8,0" KeyDown="DownloadFolderText_KeyDown" />
+                                    <Button Grid.Column="2" Click="OpenFolderPicker_Click" ToolTipService.ToolTip="选择文件夹" Style="{StaticResource CaptionButtonStyle}" Margin="8,0,0,0">
+                                        <FontIcon Glyph="📁" FontFamily="Segoe UI Emoji" />
+                                    </Button>
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="默认清晰度：" VerticalAlignment="Center" />
+                                    <ComboBox x:Name="DownloadResolutionCombo" Width="200" Margin="8,0" SelectedIndex="2">
+                                        <ComboBoxItem Content="720P" Tag="_1280x720.jpg" IsEnabled="False" />
+                                        <ComboBoxItem Content="1080P" Tag="_1920x1080.jpg" IsEnabled="False" />
+                                        <ComboBoxItem Content="UHD (4K)" Tag="_UHD.jpg" />
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8" VerticalAlignment="Center">
+                                    <CheckBox x:Name="DownloadHistoryCheck" Content="下载历史壁纸" Checked="DownloadHistoryCheck_Checked" Unchecked="DownloadHistoryCheck_Unchecked" />
+                                    <TextBlock Text=" 起始日期：" VerticalAlignment="Center" Margin="12,0,0,0" />
+                                    <CalendarDatePicker x:Name="MaxDatePicker" Width="220" IsEnabled="False" />
+                                </StackPanel>
+
+                                <Button Content="开始下载" Click="StartDownloadButton_Click" Width="120" Margin="0,8,0,0" />
+
+                                <TextBlock x:Name="DownloadStatusText" TextWrapping="Wrap" Margin="0,8,0,0" />
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- 设置壁纸 页面 -->
+                        <Grid x:Name="SettingsHost" Visibility="Collapsed" Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="设置壁纸" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                                    <TextBlock Text="幻灯片目录：" VerticalAlignment="Center" />
+                                    <TextBox x:Name="SlideshowFolderText" Width="420" Margin="8,0" IsReadOnly="False" />
+                                    <Button Click="OpenFolderPicker_Click" ToolTipService.ToolTip="选择文件夹" Style="{StaticResource CaptionButtonStyle}" Margin="8,0,0,0">
+                                        <FontIcon Glyph="📁" FontFamily="Segoe UI Emoji" />
+                                    </Button>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                                    <TextBlock Text="切换间隔（秒）：" VerticalAlignment="Center" />
+                                    <NumberBox x:Name="SlideshowInterval" Minimum="1" Maximum="86400" Value="1800" Width="120" Margin="8,0" />
+                                    <CheckBox x:Name="ShuffleCheck" Content="乱序" Margin="12,0" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                                    <TextBlock Text="填充方式：" VerticalAlignment="Center" />
+                                    <ComboBox x:Name="FillModeCombo" Width="240" Margin="8,0" SelectedIndex="4">
+                                        <ComboBoxItem Content="Center" Tag="Center" />
+                                        <ComboBoxItem Content="Tile" Tag="Tile" />
+                                        <ComboBoxItem Content="Stretch" Tag="Stretch" />
+                                        <ComboBoxItem Content="Fit" Tag="Fit" />
+                                        <ComboBoxItem Content="Fill" Tag="Fill" />
+                                        <ComboBoxItem Content="Span" Tag="Span" />
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <Button Content="应用设置" Click="ApplySlideshowButton_Click" Width="120" Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 应用程序设置 页面 -->
+                        <Grid x:Name="AppSettingsHost" Visibility="Collapsed" Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="软件设置" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                                    <CheckBox x:Name="AutoStartCheck" Content="开机自启" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                                    <TextBlock Text="默认列表：" VerticalAlignment="Center" />
+                                    <ComboBox x:Name="DefaultListCombo" Width="320" Margin="8,0" SelectedIndex="1">
+                                        <ComboBoxItem Content="sdnet.page.gd" IsEnabled="False" />
+                                        <ComboBoxItem Content="worldno1steve.github.io" />
+                                        <ComboBoxItem Content="sdnet.pages.dev" IsEnabled="False" />
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                                    <TextBlock Text="API 获取：" VerticalAlignment="Center" />
+                                    <ComboBox x:Name="ApiSourceCombo" Width="320" Margin="8,0" SelectedIndex="0">
+                                        <ComboBoxItem Content="必应" />
+                                        <ComboBoxItem Content="----" IsEnabled="False" />
+                                        <ComboBoxItem Content="----" IsEnabled="False" />
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <Button Content="保存设置" Click="SaveSoftwareSettings_Click" Width="120" Margin="0,8,0,0" />
+                                <TextBlock x:Name="AppSettingsStatusText" Margin="0,8,0,0" />
+
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 关于 页面 -->
+                        <Grid x:Name="AboutHost" Visibility="Collapsed" Margin="8">
+                            <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                                <Grid HorizontalAlignment="Stretch">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="关于" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+                                    <Expander Grid.Row="1" Header="关于作者" Margin="0,12,0,0" HorizontalAlignment="Stretch">
+                                        <Grid HorizontalAlignment="Stretch">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                                <Button Content="B站" Click="OpenBili_Click" Margin="4" />
+                                                <Button Content="邮箱" Click="OpenMail_Click" Margin="4" />
+                                                <Button Content="GitHub" Click="OpenAuthorGit_Click" Margin="4" />
+                                                <Button Content="X" Click="OpenAuthorX_Click" Margin="4" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Expander>
+
+                                    <Expander Grid.Row="2" Header="关于本项目" Margin="0,12,0,0" HorizontalAlignment="Stretch">
+                                        <Grid HorizontalAlignment="Stretch">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                                <Button Content="项目GitHub" Click="OpenProjectGit_Click" Margin="4" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Expander>
+
+                                </Grid>
+                            </ScrollViewer>
+                        </Grid>
+
+                    </Grid>
+                </Frame>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

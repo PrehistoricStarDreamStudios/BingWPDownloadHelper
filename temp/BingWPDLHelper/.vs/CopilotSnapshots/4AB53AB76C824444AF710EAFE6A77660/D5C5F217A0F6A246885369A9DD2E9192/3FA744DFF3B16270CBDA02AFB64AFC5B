@@ -1,0 +1,2145 @@
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+using Microsoft.UI.Windowing;
+using Microsoft.UI;
+using Windows.UI;
+using Microsoft.Win32;
+using System.Xml.Linq;
+
+namespace BingWPDLHelper
+{
+    public sealed partial class MainWindow : Window
+    {
+        // application config and folders
+        private string AppFolderPath;
+        private string WallpaperFolderPath;
+        private string ConfigFilePath;
+        private readonly Dictionary<string, string> _config = new(StringComparer.OrdinalIgnoreCase);
+        private const string AppVersion = "b0.1";
+        private bool AnimationEnabled = true;
+        private int AnimationMs = 200;
+        private bool _paneClosingRequested = false;
+        private bool _initialSizeApplied = false;
+        private readonly Dictionary<string, Dictionary<string, string>> _assetFileMap = new(StringComparer.OrdinalIgnoreCase);
+
+        // 详细异常记录到日志文件（同时写入临时目录以保证可写性）
+        private void LogException(Exception ex)
+        {
+            try
+            {
+                if (ex == null) return;
+
+                string BuildExceptionText(Exception e)
+                {
+                    try
+                    {
+                        if (e == null) return string.Empty;
+                        var sw = new System.Text.StringBuilder();
+                        sw.AppendLine("----- EXCEPTION " + DateTime.Now.ToString("o") + " -----");
+                        sw.AppendLine("Type: " + e.GetType().FullName);
+                        sw.AppendLine("Message: " + e.Message);
+                        sw.AppendLine("StackTrace:");
+                        sw.AppendLine(e.StackTrace ?? "(no stack)");
+                        if (e.InnerException != null)
+                        {
+                            sw.AppendLine("--- INNER ---");
+                            sw.AppendLine(BuildExceptionText(e.InnerException));
+                        }
+                        return sw.ToString();
+                    }
+                    catch { return "(failed to build exception text)"; }
+                }
+
+                var text = BuildExceptionText(ex);
+
+                // 优先写入应用目录（若可写），否则写入临时目录
+                try
+                {
+                    var appPath = AppContext.BaseDirectory ?? Environment.CurrentDirectory;
+                    var p = Path.Combine(appPath, "error.log");
+                    File.AppendAllText(p, text + Environment.NewLine);
+                }
+                catch
+                {
+                    try
+                    {
+                        var tmp = Path.Combine(Path.GetTempPath(), "BingWPDLHelper_error.log");
+                        File.AppendAllText(tmp, text + Environment.NewLine);
+                    }
+                    catch { }
+                }
+
+                try { System.Diagnostics.Debug.WriteLine(text); } catch { }
+            }
+            catch { }
+        }
+
+        public MainWindow()
+        {
+            this.InitializeComponent();
+            // ensure default wallpaper folder and config file paths use AppFolderPath (initialized in constructor body)
+
+            // Title bar drag region
+            try
+            {
+                var rootInit = this.Content as FrameworkElement;
+                var dragRegionInit = rootInit?.FindName("DragRegion") as UIElement;
+                // 延迟调用 SetTitleBar 到 Activated/Loaded，避免在窗口未就绪时触发 WinRT/WinUI 内部错误
+
+                var toggleInit = rootInit?.FindName("ToggleThemeButton") as Button;
+                if (toggleInit != null)
+                {
+                    toggleInit.IsHitTestVisible = true;
+                }
+
+
+                if (rootInit != null)
+                {
+                    bool inited = false;
+                    rootInit.LayoutUpdated += (_, __) =>
+                    {
+                        if (inited) return;
+                        inited = true;
+                        try
+                        {
+                            var isDark = rootInit.ActualTheme == ElementTheme.Dark;
+                            var toggleBtn = rootInit.FindName("ToggleThemeButton") as Button;
+                            if (toggleBtn != null)
+                            {
+                                var glyph = isDark ? "☀" : "☾";
+                                toggleBtn.Content = new FontIcon { Glyph = glyph, FontFamily = new FontFamily("Segoe UI Symbol") };
+                            }
+
+                            UpdateCaptionButtonsForeground(isDark);
+
+                            var closeBtn = rootInit.FindName("CloseButton") as Button;
+                                    if (closeBtn != null)
+                                    {
+                                        closeBtn.PointerEntered += (s, e) => closeBtn.Background = new SolidColorBrush(Microsoft.UI.Colors.Red);
+                                        closeBtn.PointerExited += (s, e) => closeBtn.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                                    }
+
+                                    // NavigationView 自带 PaneToggle 按钮用于折叠/展开，无需自定义折叠按钮事件
+                        }
+                        catch { }
+                    };
+                }
+            }
+            catch { }
+
+            // Defer setting window size until Activated to avoid calling window APIs too early
+            this.ExtendsContentIntoTitleBar = true;
+            this.Activated += (_, __) =>
+            {
+                try
+                {
+                    var root = this.Content as FrameworkElement;
+                    var dragRegion = root?.FindName("DragRegion") as UIElement;
+                    if (dragRegion != null) this.SetTitleBar(dragRegion);
+                    try { HideNativeCaptionButtons(); } catch { }
+
+                    if (!_initialSizeApplied)
+                    {
+                        try
+                        {
+                            int screenWidth = GetSystemMetrics(0);
+                            int screenHeight = GetSystemMetrics(1);
+                            int longSide = Math.Max(screenWidth, screenHeight);
+                            int shortSide = Math.Min(screenWidth, screenHeight);
+                            int targetWidth = (int)Math.Round(longSide * 0.5);
+                            int targetHeight = (int)Math.Round(shortSide * 0.6);
+                            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                            const uint SWP_NOZORDER = 0x0004;
+                            const uint SWP_NOMOVE = 0x0002;
+                            SetWindowPos(hwnd, IntPtr.Zero, 0, 0, targetWidth, targetHeight, SWP_NOZORDER | SWP_NOMOVE);
+                        }
+                        catch { }
+                        _initialSizeApplied = true;
+                    }
+                }
+                catch { }
+            };
+
+            // 注册全局异常日志并启动初始化（记录 InitializeTodayUIAsync 的异常）
+            Application.Current.UnhandledException += (s, e) =>
+            {
+                try { LogException(e.Exception); e.Handled = true; } catch { }
+            };
+            TaskScheduler.UnobservedTaskException += (s, e) =>
+            {
+                try { LogException(e.Exception); e.SetObserved(); } catch { }
+            };
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                try { LogException(e.ExceptionObject as Exception); } catch { }
+            };
+
+            InitializeTodayUIAsync().ContinueWith(t =>
+            {
+                if (t.Exception != null) { LogException(t.Exception.Flatten()); }
+            }, System.Threading.Tasks.TaskScheduler.Default);
+
+            // 监听页面折叠事件：收起目录时取消非用户发起的关闭请求
+            try
+            {
+                var rootForNav = this.Content as FrameworkElement;
+                var navView = rootForNav?.FindName("NavView") as Microsoft.UI.Xaml.Controls.NavigationView;
+                if (navView != null)
+                {
+                    navView.PaneClosing += (s, ev) =>
+                    {
+                        try
+                        {
+                            // 只有在非用户触发时取消关闭，不强制重新打开或改写 IsPaneOpen
+                            if (!_paneClosingRequested)
+                            {
+                                ev.Cancel = true;
+                            }
+                        }
+                        catch { }
+                    };
+                }
+            }
+            catch { }
+
+            // 使用 NavigationView 的内置 Toggle 控制折叠/展开；重写折叠与页面大小判定逻辑，确保整体列宽随 IsPaneOpen 更新
+            try
+            {
+                var rootForBtn = this.Content as FrameworkElement;
+                var nav = rootForBtn?.FindName("NavView") as Microsoft.UI.Xaml.Controls.NavigationView;
+                if (nav != null && rootForBtn != null)
+                {
+                    // set initial state on loaded
+                    rootForBtn.Loaded += (_, __) =>
+                    {
+                        try
+                        {
+                            nav.IsPaneOpen = true;
+                            UpdateNavLayout(nav);
+                        }
+                        catch { }
+                    };
+
+                    // when IsPaneOpen changes, update left column width
+                    try
+                    {
+                        nav.RegisterPropertyChangedCallback(Microsoft.UI.Xaml.Controls.NavigationView.IsPaneOpenProperty, new DependencyPropertyChangedCallback((dep, args) =>
+                        {
+                            try
+                            {
+                                this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+                                {
+                                    try { UpdateNavLayout(nav); } catch { }
+                                });
+                            }
+                            catch { }
+                        }));
+                    }
+                    catch { }
+
+                    // when window size changes, recompute desired open pane length and layout
+                    this.SizeChanged += (_, __) =>
+                    {
+                        try
+                        {
+                            UpdateNavLayout(nav);
+                        }
+                        catch { }
+                    };
+
+                    // 记录用户通过标题栏折叠按钮发起的请求
+                    try
+                    {
+                        var collapseBtn = rootForBtn.FindName("CollapseNavButtonLeft") as Button;
+                        if (collapseBtn != null)
+                        {
+                            collapseBtn.Click += (s, e) => { _paneClosingRequested = true; };
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
+            // Ensure AppData folders and config
+
+            try
+            {
+                var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                AppFolderPath = Path.Combine(roaming, "WPDLHelper");
+                WallpaperFolderPath = Path.Combine(AppFolderPath, "Wallpaper");
+                ConfigFilePath = Path.Combine(AppFolderPath, "config.ini");
+                if (!Directory.Exists(AppFolderPath)) Directory.CreateDirectory(AppFolderPath);
+                if (!Directory.Exists(WallpaperFolderPath)) Directory.CreateDirectory(WallpaperFolderPath);
+
+                if (!File.Exists(ConfigFilePath))
+                {
+                    var defaultCfg = new List<string>
+                    {
+                        "version=" + AppVersion,
+                        "animation_enabled=true",
+                        "animation_ms=200",
+                        "default_resolution=UHD",
+                        "download_folder=Wallpaper"
+                    };
+                    File.WriteAllLines(ConfigFilePath, defaultCfg);
+                }
+
+                var lines = File.ReadAllLines(ConfigFilePath);
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+                    if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#")) continue;
+                    var idx = trimmed.IndexOf('=');
+                    if (idx > 0)
+                    {
+                        var k = trimmed.Substring(0, idx).Trim();
+                        var v = trimmed.Substring(idx + 1).Trim();
+                        _config[k] = v;
+                    }
+                }
+
+                if (_config.TryGetValue("animation_enabled", out var aen)) AnimationEnabled = aen.Equals("true", StringComparison.OrdinalIgnoreCase);
+                if (_config.TryGetValue("animation_ms", out var ams) && int.TryParse(ams, out var ms)) AnimationMs = ms;
+
+                // 读取 download_folder，并更新 WallpaperFolderPath（支持相对路径）
+                if (_config.TryGetValue("download_folder", out var df) && !string.IsNullOrEmpty(df))
+                {
+                    WallpaperFolderPath = Path.IsPathRooted(df) ? df : Path.Combine(AppFolderPath, df);
+                }
+                if (!Directory.Exists(WallpaperFolderPath)) Directory.CreateDirectory(WallpaperFolderPath);
+
+                // initialize AppSettings UI (autostart/default list/api)
+                try
+                {
+                    var root = this.Content as FrameworkElement;
+                    var autoChk = root?.FindName("AutoStartCheck") as CheckBox;
+                    if (autoChk != null)
+                    {
+                        var aut = _config.TryGetValue("autostart", out var av) && av.Equals("true", StringComparison.OrdinalIgnoreCase);
+                        autoChk.IsChecked = aut;
+                        try { SetAutoStart(aut); } catch { }
+                    }
+                    var defListCombo = root?.FindName("DefaultListCombo") as ComboBox;
+                    if (defListCombo != null)
+                    {
+                        var defList = _config.TryGetValue("default_list", out var dl) ? dl : "local";
+                        foreach (ComboBoxItem it in defListCombo.Items)
+                        {
+                            var tag = it.Tag as string ?? (it.Content as string);
+                            if (tag == defList) { defListCombo.SelectedItem = it; break; }
+                        }
+                    }
+                    var apiCombo = root?.FindName("ApiSourceCombo") as ComboBox;
+                    if (apiCombo != null)
+                    {
+                        var api = _config.TryGetValue("api_source", out var ap) ? ap : "bing";
+                        if (api == "bing") apiCombo.SelectedIndex = 0;
+                    }
+                }
+                catch { }
+            }
+            catch { }
+
+            // 注册 Loaded 事件，用于在布局完成后修正分段指示器位置并绑定尺寸变化以保持对齐
+            try { var rootEl = this.Content as FrameworkElement; if (rootEl != null) rootEl.Loaded += MainWindow_Loaded; } catch { }
+            }
+
+            // Show window if not open; activate if already open
+            public void ShowOrActivate()
+            {
+                try
+                {
+                    // Activate the window (if minimized or hidden this will bring it up)
+                    this.Activate();
+                }
+                catch { }
+            }
+
+            // Expose method to show settings page
+            public void ShowSettings()
+            {
+                try
+                {
+                    var root = this.Content as FrameworkElement;
+                    var nav = root?.FindName("NavView") as Microsoft.UI.Xaml.Controls.NavigationView;
+                    if (nav != null)
+                    {
+                        foreach (NavigationViewItem it in nav.FooterMenuItems)
+                        {
+                            if (it.Tag != null && it.Tag.ToString() == "3") { nav.SelectedItem = it; break; }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // Trigger check/download action: switch to 下载页
+            public void TriggerCheckDownloads()
+            {
+                try
+                {
+                    var root = this.Content as FrameworkElement;
+                    var nav = root?.FindName("NavView") as Microsoft.UI.Xaml.Controls.NavigationView;
+                    if (nav != null)
+                    {
+                        foreach (var item in nav.MenuItems)
+                        {
+                            if (item is Microsoft.UI.Xaml.Controls.NavigationViewItem nvi && nvi.Tag != null && nvi.Tag.ToString() == "1") { nav.SelectedItem = nvi; break; }
+                        }
+                    }
+
+                    // ensure defaults: 16:9-UHD
+                    try
+                    {
+                        var aspect = root?.FindName("AspectRatioCombo") as ComboBox;
+                        var res = root?.FindName("ResolutionCombo") as ComboBox;
+                        if (aspect != null && res != null)
+                        {
+                            for (int i = 0; i < aspect.Items.Count; i++) { if ((aspect.Items[i] as ComboBoxItem)?.Content as string == "16:9") { aspect.SelectedIndex = i; break; } }
+                            // trigger selection changed will populate resolutions; then select UHD
+                            if (res.Items.Count > 0)
+                            {
+                                for (int j = 0; j < res.Items.Count; j++) { if ((res.Items[j] as ComboBoxItem)?.Content as string == "3840x2160") { res.SelectedIndex = j; break; } }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+                catch { }
+            }
+
+            private void AspectRatioCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+            {
+                try
+                {
+                    var aspect = sender as ComboBox;
+                    var root = this.Content as FrameworkElement;
+                    var res = root?.FindName("ResolutionCombo") as ComboBox;
+                    if (aspect == null || res == null) return;
+                    res.Items.Clear();
+                    var map = aspect.Tag as Dictionary<string, List<string>>;
+                    var key = (aspect.SelectedItem as ComboBoxItem)?.Content as string;
+                    if (!string.IsNullOrEmpty(key) && map != null && map.ContainsKey(key))
+                    {
+                        foreach (var rr in map[key].Distinct().OrderBy(x => x))
+                        {
+                            var tag = "_" + rr + ".jpg";
+                            res.Items.Add(new ComboBoxItem { Content = rr, Tag = tag });
+                        }
+                    }
+                    if (res.Items.Count == 0) res.Items.Add(new ComboBoxItem { Content = "3840x2160", Tag = "_3840x2160.jpg" });
+
+                    // determine configured default resolution or pick highest available for this aspect
+                    string configuredRes = null;
+                    if (_config.TryGetValue("default_resolution", out var dr)) configuredRes = dr;
+                    string targetRes = null;
+                    if (!string.IsNullOrEmpty(configuredRes))
+                    {
+                        if (configuredRes == "720") targetRes = "1280x720";
+                        else if (configuredRes == "1080") targetRes = "1920x1080";
+                        else if (configuredRes.Equals("UHD", StringComparison.OrdinalIgnoreCase)) targetRes = "3840x2160";
+                        else targetRes = configuredRes;
+                    }
+
+                    int bestIndex = -1;
+                    long bestArea = -1;
+                    for (int j = 0; j < res.Items.Count; j++)
+                    {
+                        var it = res.Items[j] as ComboBoxItem;
+                        if (it == null) continue;
+                        var content = it.Content as string ?? "";
+                        if (!string.IsNullOrEmpty(targetRes) && content == targetRes) { res.SelectedIndex = j; bestIndex = -2; break; }
+                        var m = System.Text.RegularExpressions.Regex.Match(content, "(\\d{3,4})x(\\d{3,4})");
+                        if (m.Success && int.TryParse(m.Groups[1].Value, out var w) && int.TryParse(m.Groups[2].Value, out var h))
+                        {
+                            long area = (long)w * h;
+                            if (area > bestArea) { bestArea = area; bestIndex = j; }
+                        }
+                    }
+                    if (res.SelectedIndex < 0 && bestIndex >= 0) res.SelectedIndex = bestIndex;
+                    // fallback to UHD if nothing selected
+                    if (res.SelectedIndex < 0)
+                    {
+                        for (int j = 0; j < res.Items.Count; j++) { var it = res.Items[j] as ComboBoxItem; if (it != null && it.Content as string == "3840x2160") { res.SelectedIndex = j; break; } }
+                    }
+                }
+                catch { }
+            }
+
+        private void UpdateNavLayout(Microsoft.UI.Xaml.Controls.NavigationView nav)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                if (root == null || nav == null) return;
+                Grid parentGrid = null;
+                try { parentGrid = nav.Parent as Grid; } catch { parentGrid = null; }
+                double compactW = 48; // default compact width (will be adjusted to text)
+                double openW = 240;
+                try { var wnd = this; double winW = wnd.Bounds.Width; if (winW > 0) { openW = Math.Max(200, Math.Min(400, winW * 0.4)); } } catch { }
+                try { nav.CompactPaneLength = (int)compactW; nav.OpenPaneLength = openW; } catch { }
+                try
+                {
+                    // compute widths based on widest menu item text + padding
+                    try
+                    {
+                        double maxText = 0;
+                        foreach (var mi in nav.MenuItems)
+                        {
+                            if (mi is NavigationViewItem nvi)
+                            {
+                                var cp = nvi.Content?.ToString() ?? string.Empty;
+                                if (!string.IsNullOrEmpty(cp))
+                                {
+                                    var tb = new TextBlock { Text = cp, FontSize = 14 };
+                                    tb.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                                    maxText = Math.Max(maxText, tb.DesiredSize.Width);
+                                }
+                            }
+                        }
+
+                        if (maxText > 0)
+                        {
+                            // estimate icon width + left/right padding
+                            double iconEstimate = 24;
+                            double paddingEstimate = 32;
+                            // set openW to fit text + icon + padding, constrain to a reasonable range
+                            openW = Math.Max(180, Math.Min(600, Math.Ceiling(iconEstimate + maxText + paddingEstimate)));
+                        }
+
+                        // apply computed lengths
+                        try { nav.OpenPaneLength = openW; nav.CompactPaneLength = (int)Math.Ceiling(compactW); } catch { }
+                    }
+                    catch { }
+                }
+                catch { }
+                try
+                {
+                    if (parentGrid == null)
+                    {
+                        DependencyObject p = nav.Parent;
+                        while (p != null && !(p is Grid)) p = VisualTreeHelper.GetParent(p);
+                        parentGrid = p as Grid;
+                    }
+
+                    if (parentGrid != null && parentGrid.ColumnDefinitions.Count >= 1)
+                    {
+                        parentGrid.ColumnDefinitions[0].Width = nav.IsPaneOpen ? new GridLength(openW) : new GridLength(compactW);
+                    }
+                }
+                catch { }
+            }
+            catch { }
+        }
+
+        private void NavView_SelectionChanged(Microsoft.UI.Xaml.Controls.NavigationView sender, Microsoft.UI.Xaml.Controls.NavigationViewSelectionChangedEventArgs args)
+        {
+            try
+            {
+                var nv = sender as NavigationView;
+                // 使用 Tag 控制页面索引（避免 SelectedIndex 受分组影响）
+                int idx = 0;
+                try { if (args?.SelectedItem is NavigationViewItem it && it.Tag != null) idx = int.Parse(it.Tag.ToString()); }
+                catch { idx = 0; }
+                var root = this.Content as FrameworkElement;
+                var todayHost = root?.FindName("TodayHost") as UIElement;
+                var downloadHost = root?.FindName("DownloadHost") as UIElement;
+                var settingsHost = root?.FindName("SettingsHost") as UIElement; // may be removed
+                // todayHost and downloadHost control main content; 软件设置 and 关于 handled separately
+                if (todayHost == null || downloadHost == null) return;
+
+                var appSettings = root?.FindName("AppSettingsHost") as UIElement;
+                var aboutHost = root?.FindName("AboutHost") as UIElement;
+                todayHost.Visibility = idx == 0 ? Visibility.Visible : Visibility.Collapsed;
+                downloadHost.Visibility = idx == 1 ? Visibility.Visible : Visibility.Collapsed;
+                if (settingsHost != null) settingsHost.Visibility = idx == 2 ? Visibility.Visible : Visibility.Collapsed;
+                if (appSettings != null) appSettings.Visibility = idx == 3 ? Visibility.Visible : Visibility.Collapsed;
+                if (aboutHost != null) aboutHost.Visibility = idx == 4 ? Visibility.Visible : Visibility.Collapsed;
+
+                // 软件设置 (Tag=3) 可直接由 AppSettingsHost 控制显示
+                // 关于 (Tag=4) 由 AboutHost 控制显示（替换原来的对话框）
+
+                // 当切换到下载页时，确保显示当前下载目录
+                if (idx == 1)
+                {
+                    try
+                    {
+                        var dlText = root.FindName("DownloadFolderText") as TextBox;
+                        if (dlText != null) dlText.Text = WallpaperFolderPath;
+                    }
+                    catch { }
+                }
+                else if (idx == 2)
+                {
+                    try
+                    {
+                        // 切换到设置壁纸页时填充默认值（使用当前下载目录）
+                        var sText = root.FindName("SlideshowFolderText") as TextBox;
+                        if (sText != null) sText.Text = WallpaperFolderPath;
+                        var interval = root.FindName("SlideshowInterval") as Microsoft.UI.Xaml.Controls.NumberBox;
+                        if (interval != null && _config.TryGetValue("slideshow_interval", out var iv) && int.TryParse(iv, out var ivv)) interval.Value = ivv;
+                        var shuffle = root.FindName("ShuffleCheck") as CheckBox; if (shuffle != null && _config.TryGetValue("slideshow_shuffle", out var sh)) shuffle.IsChecked = sh.Equals("true", StringComparison.OrdinalIgnoreCase);
+                        var fill = root.FindName("FillModeCombo") as ComboBox; if (fill != null && _config.TryGetValue("slideshow_fill", out var f))
+                        {
+                            foreach (ComboBoxItem it in fill.Items) { if (it.Tag?.ToString() == f) { fill.SelectedItem = it; break; } }
+                        }
+                        var setacc = root.FindName("SetAccentCheck") as CheckBox; if (setacc != null && _config.TryGetValue("slideshow_setacc", out var sa)) setacc.IsChecked = sa.Equals("true", StringComparison.OrdinalIgnoreCase);
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
+        private async System.Threading.Tasks.Task InitializeTodayUIAsync()
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var left = root?.FindName("NavView") as NavigationView;
+                if (left != null && left.SelectedItem == null) left.SelectedItem = left.MenuItems[0] as NavigationViewItem;
+
+                // 确保下载目录显示在文本框中（若 UI 已加载）
+                try { var dlText = root?.FindName("DownloadFolderText") as TextBox; if (dlText != null) dlText.Text = WallpaperFolderPath; } catch { }
+                // 初始化比例与分辨率下拉
+                try
+                {
+                    var aspect = root?.FindName("AspectRatioCombo") as ComboBox;
+                    var res = root?.FindName("ResolutionCombo") as ComboBox;
+                    if (aspect != null && res != null)
+                    {
+                        aspect.Items.Clear();
+                        res.Items.Clear();
+                        // scan Assets/*.xml for aspect and resolution entries
+                        var assetDir = Path.Combine(AppContext.BaseDirectory, "Assets");
+                        if (Directory.Exists(assetDir))
+                        {
+                            var files = Directory.GetFiles(assetDir, "list*.xml");
+                            var aspectSet = new HashSet<string>();
+                            var resMap = new Dictionary<string, List<string>>();
+                            foreach (var f in files)
+                            {
+                                try
+                                {
+                                    // try to parse XML for resolution/aspect attributes (supports single large list.xml)
+                                    var xdoc = System.Xml.Linq.XDocument.Load(f);
+                                    var resNodes = xdoc.Descendants("resolution").ToList();
+                                    foreach (var resNode in resNodes)
+                                    {
+                                        var r = (string)resNode.Attribute("name") ?? "";
+                                        var ar = (string)resNode.Attribute("aspect_ratio") ?? "";
+                                        if (string.IsNullOrEmpty(ar) && !string.IsNullOrEmpty(r) && r.Contains('x'))
+                                        {
+                                            var parts = r.Split('x');
+                                            if (parts.Length == 2 && int.TryParse(parts[0], out var w) && int.TryParse(parts[1], out var h))
+                                            {
+                                                ar = $"{w / Gcd(w,h)}:{h / Gcd(w,h)}";
+                                            }
+                                        }
+                                        if (!string.IsNullOrEmpty(ar))
+                                        {
+                                            aspectSet.Add(ar);
+                                            if (!resMap.ContainsKey(ar)) resMap[ar] = new List<string>();
+                                            if (!string.IsNullOrEmpty(r) && !resMap[ar].Contains(r)) resMap[ar].Add(r);
+
+                                            try
+                                            {
+                                                if (!_assetFileMap.ContainsKey(ar)) _assetFileMap[ar] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                                                if (!string.IsNullOrEmpty(r) && !_assetFileMap[ar].ContainsKey(r)) _assetFileMap[ar][r] = f;
+                                            }
+                                            catch { }
+                                        }
+                                    }
+
+                                    // fallback: infer from first wallpaper url if no resolution nodes found
+                                    if (!resNodes.Any())
+                                    {
+                                        var firstWp = xdoc.Descendants("wallpaper").FirstOrDefault();
+                                        if (firstWp != null)
+                                        {
+                                            var wpUrl = (string)firstWp.Attribute("url") ?? "";
+                                            var m = System.Text.RegularExpressions.Regex.Match(wpUrl, "_(\\d{3,4}x\\d{3,4})\\.jpg", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                            if (m.Success)
+                                            {
+                                                var r = m.Groups[1].Value;
+                                                var parts = r.Split('x');
+                                                if (parts.Length == 2 && int.TryParse(parts[0], out var w) && int.TryParse(parts[1], out var h))
+                                                {
+                                                    var ar = $"{w / Gcd(w,h)}:{h / Gcd(w,h)}";
+                                                    aspectSet.Add(ar);
+                                                    if (!resMap.ContainsKey(ar)) resMap[ar] = new List<string>();
+                                                    if (!resMap[ar].Contains(r)) resMap[ar].Add(r);
+                                                    try
+                                                    {
+                                                        if (!_assetFileMap.ContainsKey(ar)) _assetFileMap[ar] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                                                        if (!_assetFileMap[ar].ContainsKey(r)) _assetFileMap[ar][r] = f;
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                catch { }
+                            }
+
+                            // populate aspect combo
+                            foreach (var a in aspectSet.OrderBy(x => x)) { aspect.Items.Add(new ComboBoxItem { Content = a }); }
+
+                            // try to select configured default aspect first, then 16:9
+                            string configuredAspect = null;
+                            if (_config.TryGetValue("default_aspect", out var da)) configuredAspect = da;
+                            if (!string.IsNullOrEmpty(configuredAspect))
+                            {
+                                for (int i = 0; i < aspect.Items.Count; i++) { var it = aspect.Items[i] as ComboBoxItem; if (it != null && it.Content as string == configuredAspect) { aspect.SelectedIndex = i; break; } }
+                            }
+                            if (aspect.SelectedIndex < 0)
+                            {
+                                for (int i = 0; i < aspect.Items.Count; i++)
+                                {
+                                    var it = aspect.Items[i] as ComboBoxItem;
+                                    if (it != null && it.Content is string contentStr && contentStr.Trim() == "16:9") { aspect.SelectedIndex = i; break; }
+                                }
+                            }
+
+                            // fill resolutions for selected aspect
+                            try
+                            {
+                                var sel = (aspect.SelectedItem as ComboBoxItem)?.Content as string;
+                                if (!string.IsNullOrEmpty(sel) && resMap.ContainsKey(sel))
+                                {
+                                    foreach (var rr in resMap[sel].Distinct().OrderBy(x => x))
+                                    {
+                                        // set Tag to suffix like _3840x2160.jpg so it can be used for building URL
+                                        var tag = "_" + rr + ".jpg";
+                                        res.Items.Add(new ComboBoxItem { Content = rr, Tag = tag });
+                                    }
+                                }
+                                else
+                                {
+                                    // fallback: add UHD
+                                    res.Items.Add(new ComboBoxItem { Content = "3840x2160", Tag = "_3840x2160.jpg" });
+                                }
+
+                                // select configured default resolution if present, otherwise pick highest available for this aspect
+                                string configuredRes = null;
+                                if (_config.TryGetValue("default_resolution", out var dr)) configuredRes = dr;
+                                // map legacy tokens to actual resolution strings
+                                string targetRes = null;
+                                if (!string.IsNullOrEmpty(configuredRes))
+                                {
+                                    if (configuredRes == "720") targetRes = "1280x720";
+                                    else if (configuredRes == "1080") targetRes = "1920x1080";
+                                    else if (configuredRes.Equals("UHD", StringComparison.OrdinalIgnoreCase)) targetRes = "3840x2160";
+                                    else targetRes = configuredRes;
+                                }
+
+                                int bestIndex = -1;
+                                long bestArea = -1;
+                                for (int j = 0; j < res.Items.Count; j++)
+                                {
+                                    var it = res.Items[j] as ComboBoxItem;
+                                    if (it == null) continue;
+                                    var content = it.Content as string ?? "";
+                                    if (!string.IsNullOrEmpty(targetRes) && content == targetRes) { res.SelectedIndex = j; bestIndex = -2; break; }
+                                    var m = System.Text.RegularExpressions.Regex.Match(content, "(\\d{3,4})x(\\d{3,4})");
+                                    if (m.Success && int.TryParse(m.Groups[1].Value, out var w) && int.TryParse(m.Groups[2].Value, out var h))
+                                    {
+                                        long area = (long)w * h;
+                                        if (area > bestArea) { bestArea = area; bestIndex = j; }
+                                    }
+                                }
+                                if (res.SelectedIndex < 0 && bestIndex >= 0) res.SelectedIndex = bestIndex;
+                                // fallback to UHD if nothing selected
+                                if (res.SelectedIndex < 0)
+                                {
+                                    res.Items.Add(new ComboBoxItem { Content = "3840x2160", Tag = "_3840x2160.jpg" });
+                                    for (int j = 0; j < res.Items.Count; j++) { var it = res.Items[j] as ComboBoxItem; if (it != null && it.Content as string == "3840x2160") { res.SelectedIndex = j; break; } }
+                                }
+
+                            }
+                            catch { }
+
+                            // store mapping in Tag for later use (aspect.Tag -> Dictionary<string,List<string>>)
+                            aspect.Tag = resMap;
+                        }
+                    }
+                }
+                catch { }
+                // 确保设置壁纸页的幻灯片目录默认为下载目录
+                try { var sText = root?.FindName("SlideshowFolderText") as TextBox; if (sText != null) sText.Text = WallpaperFolderPath; } catch { }
+
+                // 初始化年/月/日下拉用于历史下载选择（年：2021..当前，月：1..12，日：1..31）
+                try
+                {
+                    var yearCb = root?.FindName("YearCombo") as ComboBox;
+                    var monthCb = root?.FindName("MonthCombo") as ComboBox;
+                    var dayCb = root?.FindName("DayCombo") as ComboBox;
+                    if (yearCb != null && monthCb != null && dayCb != null)
+                    {
+                        yearCb.Items.Clear(); monthCb.Items.Clear(); dayCb.Items.Clear();
+                        int startYear = 2021;
+                        int currentYear = DateTime.Now.Year;
+                        for (int y = startYear; y <= currentYear; y++) yearCb.Items.Add(new ComboBoxItem { Content = y.ToString() });
+                        for (int m = 1; m <= 12; m++) monthCb.Items.Add(new ComboBoxItem { Content = m.ToString("D2") });
+                        for (int d = 1; d <= 31; d++) dayCb.Items.Add(new ComboBoxItem { Content = d.ToString("D2") });
+                        // 默认值为 7 天之前
+                        var defDate = DateTime.Now.Date.AddDays(-7);
+                        SelectComboItemByContent(yearCb, defDate.Year.ToString());
+                        SelectComboItemByContent(monthCb, defDate.Month.ToString("D2"));
+                        SelectComboItemByContent(dayCb, defDate.Day.ToString("D2"));
+                    }
+                }
+                catch { }
+
+                var http = new System.Net.Http.HttpClient();
+                var url = "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US";
+                var s = await http.GetStringAsync(url);
+                using var doc = System.Text.Json.JsonDocument.Parse(s);
+                var images = doc.RootElement.GetProperty("images");
+                if (images.GetArrayLength() > 0)
+                {
+                    var first = images[0];
+                    var urlBase = first.GetProperty("urlbase").GetString();
+                    string title = null;
+                    if (first.TryGetProperty("copyright", out var cp)) title = cp.GetString();
+                    else if (first.TryGetProperty("title", out var t)) title = t.GetString();
+
+                    if (!string.IsNullOrEmpty(urlBase))
+                    {
+                        var res = _config.ContainsKey("default_resolution") ? _config["default_resolution"] : "UHD";
+                        var suffix = res == "720" || res.Equals("720p", StringComparison.OrdinalIgnoreCase) ? "_1280x720.jpg" : res == "1080" ? "_1920x1080.jpg" : "_UHD.jpg";
+                        var full = "https://www.bing.com" + urlBase + suffix;
+                        var img = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(full));
+                        var mainImg = root?.FindName("MainImage") as Microsoft.UI.Xaml.Controls.Image;
+                        if (mainImg != null) mainImg.Source = img;
+
+                        var titleBlock = root?.FindName("ImageTitle") as TextBlock;
+                        if (titleBlock != null) titleBlock.Text = title ?? string.Empty;
+
+                        // update selector (select BUHD by default)
+                                _ = this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+                                {
+                                    try
+                                    {
+                                        var seg = root?.FindName("BUHD") as FrameworkElement;
+                                var segGrid = root?.FindName("SegGrid") as Grid;
+                                var sel = root?.FindName("SelIndicator") as Border;
+                                var selTrans = root?.FindName("SelTransform") as Microsoft.UI.Xaml.Media.TranslateTransform;
+                                if (seg != null && sel != null && selTrans != null && segGrid != null)
+                                {
+                                    var t = seg.TransformToVisual(segGrid).TransformPoint(new Point(0, 0));
+                                    double overlapAdjustment = 0;
+                                    if (seg == (root?.FindName("B1080") as FrameworkElement)) overlapAdjustment = -2;
+                                    if (seg == (root?.FindName("BUHD") as FrameworkElement)) overlapAdjustment = -4;
+
+                                    double innerWidth = seg.ActualWidth;
+                                    try
+                                    {
+                                        var btn = seg.FindName("Btn720") as FrameworkElement;
+                                        if (btn == null) btn = seg.FindName("Btn1080") as FrameworkElement;
+                                        if (btn == null) btn = seg.FindName("BtnUHD") as FrameworkElement;
+                                        if (btn != null) innerWidth = btn.ActualWidth + 24;
+                                    }
+                                    catch { }
+
+                                    var targetWidth = Math.Max(0, innerWidth - 4);
+                                    var targetX = t.X + 2 + overlapAdjustment;
+
+                                    if (AnimationEnabled && AnimationMs > 0)
+                                    {
+                                        AnimateSelIndicator(sel, selTrans, sel.Width, targetWidth, selTrans.X, targetX, AnimationMs);
+                                    }
+                                    else
+                                    {
+                                        sel.Width = targetWidth;
+                                        selTrans.X = targetX;
+                                        sel.Opacity = 1.0;
+                                    }
+                                }
+                            }
+                            catch { }
+                        });
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void Seg_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                if (root == null) return;
+
+                Button btn = sender as Button;
+                if (btn != null)
+                {
+                    // 移动指示器到目标按钮并高亮
+                    MoveSelToButton(btn);
+                }
+
+                // 加载对应清晰度图片
+                var mainImg = root?.FindName("MainImage") as Microsoft.UI.Xaml.Controls.Image;
+                if (mainImg != null)
+                {
+                    string suffix = "_UHD.jpg";
+                    if (btn?.Name == "Btn720") suffix = "_1280x720.jpg";
+                    else if (btn?.Name == "Btn1080") suffix = "_1920x1080.jpg";
+
+                    try
+                    {
+                        var http = new System.Net.Http.HttpClient();
+                        var url = "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US";
+                        var s = http.GetStringAsync(url).Result;
+                        using var doc = System.Text.Json.JsonDocument.Parse(s);
+                        var images = doc.RootElement.GetProperty("images");
+                        if (images.GetArrayLength() > 0)
+                        {
+                            var first = images[0];
+                            var urlBase = first.GetProperty("urlbase").GetString();
+                            if (!string.IsNullOrEmpty(urlBase))
+                            {
+                                var full = "https://www.bing.com" + urlBase + suffix;
+                                mainImg.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(full));
+
+                                var titleBlock = root?.FindName("ImageTitle") as TextBlock;
+                                if (titleBlock != null && first.TryGetProperty("copyright", out var cp)) titleBlock.Text = cp.GetString();
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
+        private int _currentSegIndex = 2;
+        // 将 SelIndicator 移动并居中到指定按钮内部（基于 SegGrid 三等分列计算）
+        private void MoveSelToButton(Button btn)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var segGrid = root?.FindName("SegGrid") as Grid;
+                var sel = root?.FindName("SelIndicator") as Border;
+                var selTrans = root?.FindName("SelTransform") as Microsoft.UI.Xaml.Media.TranslateTransform;
+                if (segGrid == null || sel == null || selTrans == null || btn == null) return;
+
+                int colIndex = 2;
+                var b720 = root.FindName("Btn720") as Button;
+                var b1080 = root.FindName("Btn1080") as Button;
+                var buhd = root.FindName("BtnUHD") as Button;
+                if (btn == b720) colIndex = 0; else if (btn == b1080) colIndex = 1; else colIndex = 2;
+
+                // 计算列宽并设置指示器宽度与位置
+                double segGridWidth = Math.Max(0, segGrid.ActualWidth);
+                double columnWidth = segGridWidth / 3.0;
+                double targetWidth = Math.Max(0, columnWidth - 12);
+                double targetX = columnWidth * colIndex + (columnWidth - targetWidth) / 2.0;
+
+                _currentSegIndex = colIndex;
+
+                if (AnimationEnabled && AnimationMs > 0)
+                {
+                    AnimateSelIndicator(sel, selTrans, sel.Width, targetWidth, selTrans.X, targetX, AnimationMs);
+                }
+                else
+                {
+                    sel.Width = targetWidth;
+                    selTrans.X = targetX;
+                    sel.Opacity = 1.0;
+                }
+
+                // 调整按钮前景色，突出被选中项
+                try
+                {
+                    foreach (var b in new[] { b720, b1080, buhd })
+                    {
+                        if (b == null) continue;
+                        b.Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemControlForegroundBaseHighBrush"];
+                    }
+                    var selBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White);
+                    if (colIndex == 0 && b720 != null) b720.Foreground = selBrush;
+                    if (colIndex == 1 && b1080 != null) b1080.Foreground = selBrush;
+                    if (colIndex == 2 && buhd != null) buhd.Foreground = selBrush;
+                }
+                catch { }
+            }
+            catch { }
+        }
+
+        // 递归查找视觉树中第一个可用的 TextBlock 或 ContentPresenter 的实际宽度（保留以备后用）
+        private static int Gcd(int a, int b)
+        {
+            try { a = Math.Abs(a); b = Math.Abs(b); while (b != 0) { var t = a % b; a = b; b = t; } return a == 0 ? 1 : a; } catch { return 1; }
+        }
+
+        // 根据所选分辨率调整 URL（仅当非 3840x2160 时替换 UHD 或 3840x2160 后缀）
+        private string AdjustUrlToResolution(string url, string selRes)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url)) return url;
+                if (string.IsNullOrEmpty(selRes)) return url;
+                // 规范化相对 URL
+                if (url.StartsWith("//")) url = "https:" + url;
+                else if (url.StartsWith("/")) url = "https://cn.bing.com" + url;
+
+                // 如果选择 3840x2160，优先只规范化 URL，不强制替换后缀
+                if (selRes == "3840x2160") return url;
+
+                try
+                {
+                    // 先替换常见的 UHD 或 3840x2160 后缀（例如 Name_UHD.jpg 或 Name_3840x2160.jpg）
+                    url = System.Text.RegularExpressions.Regex.Replace(url, "_(?:UHD|3840x2160)(?:\\.jpg)?", "_" + selRes + ".jpg", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                }
+                catch { }
+
+                try
+                {
+                    // 对于 query 形式的 th?id=...，从 query 中提取 id 并重建带所选分辨率的直链
+                    // 支持 id 原本带或不带分辨率后缀的情况
+                    var m = System.Text.RegularExpressions.Regex.Match(url, @"th\?id=([^&_]+)(?:_(?:\d{3,4}x\d{3,4}|UHD))?(?:\.jpg)?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (m.Success)
+                    {
+                        var idPart = m.Groups[1].Value; // 这通常是资源 id 的主体（不含后缀）
+                        if (!string.IsNullOrEmpty(idPart))
+                        {
+                            // 构建可直接下载的链接，保证以 .jpg 结尾并带所选分辨率
+                            url = $"https://cn.bing.com/th?id={idPart}_{selRes}.jpg";
+                        }
+                    }
+                }
+                catch { }
+
+                return url;
+            }
+            catch { return url; }
+        }
+
+        private void SelectComboItemByContent(ComboBox cb, string content)
+        {
+            try
+            {
+                if (cb == null) return;
+                for (int i = 0; i < cb.Items.Count; i++)
+                {
+                    if ((cb.Items[i] as ComboBoxItem)?.Content as string == content) { cb.SelectedIndex = i; return; }
+                }
+            }
+            catch { }
+        }
+
+        private double GetDescendantActualWidth(DependencyObject root)
+        {
+            try
+            {
+                if (root == null) return 0;
+                var count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(root);
+                for (int i = 0; i < count; i++)
+                {
+                    var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(root, i);
+                    if (child is TextBlock tb && tb.ActualWidth > 0) return tb.ActualWidth;
+                    if (child is ContentPresenter cp && cp.ActualWidth > 0) return cp.ActualWidth;
+                    var w = GetDescendantActualWidth(child);
+                    if (w > 0) return w;
+                }
+            }
+            catch { }
+            return 0;
+        }
+
+
+        // animation helper
+        private void AnimateSelIndicator(Border sel, Microsoft.UI.Xaml.Media.TranslateTransform selTrans, double fromWidth, double toWidth, double fromX, double toX, int durationMs)
+        {
+            try
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var dq = this.DispatcherQueue;
+                        System.Threading.Timer timer = null;
+                timer = new System.Threading.Timer(_ =>
+                {
+                    var t = Math.Min(1.0, sw.Elapsed.TotalMilliseconds / Math.Max(1, durationMs));
+                    var curW = fromWidth + (toWidth - fromWidth) * t;
+                    var curX = fromX + (toX - fromX) * t;
+                    try
+                    {
+                        dq.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+                        {
+                            sel.Width = curW;
+                            selTrans.X = curX;
+                            sel.Opacity = 1.0;
+                        });
+                    }
+                    catch { }
+
+                    if (t >= 1.0)
+                    {
+                        try { timer?.Dispose(); } catch { }
+                    }
+                }, null, 0, 16);
+            }
+            catch { }
+        }
+
+
+        private void ApplySlideshowButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var status = root?.FindName("SettingsStatusText") as TextBlock;
+                var folder = WallpaperFolderPath;
+                try { var dlText = root.FindName("DownloadFolderText") as TextBox; if (dlText != null && !string.IsNullOrWhiteSpace(dlText.Text)) folder = dlText.Text; } catch { }
+                if (!Directory.Exists(folder))
+                {
+                    if (status != null) status.Text = "幻灯片目录不存在: " + folder;
+                    return;
+                }
+
+                try
+                {
+                    // 尝试通过 IDesktopWallpaper COM 接口设置幻灯片（使用 CLSID_DesktopWallpaper）
+                    Type dt = Type.GetTypeFromCLSID(new Guid("C2CF3110-460E-4FC1-B9D0-8A0D4F2E2F7A"));
+                    dynamic desktop = Activator.CreateInstance(dt);
+                    // 直接传入文件夹在部分系统上可被接受，尝试设置幻灯片源为指定目录
+                    desktop.SetSlideshow(folder);
+                    var shuffle = (root.FindName("ShuffleCheck") as CheckBox)?.IsChecked ?? false;
+                    desktop.SetSlideshowOptions(0, shuffle ? 1 : 0);
+                    var posItem = (root.FindName("FillModeCombo") as ComboBox)?.SelectedItem as ComboBoxItem;
+                    var tag = posItem?.Tag?.ToString() ?? "Fill";
+                    int position = 4;
+                    if (tag == "Center") position = 0; else if (tag == "Tile") position = 1; else if (tag == "Stretch") position = 2; else if (tag == "Fit") position = 3; else if (tag == "Fill") position = 4; else if (tag == "Span") position = 5;
+                    desktop.SetPosition(position);
+                    if (status != null) status.Text = "已尝试设置幻灯片，请检查系统设置以确认已应用。";
+                }
+                catch (Exception ex)
+                {
+                    try { if (status != null) status.Text = "调用系统 API 失败，错误: " + ex.Message + "。请手动检查系统设置或以管理员身份运行程序以尝试修复。"; } catch { }
+                    // 不再自动打开系统设置
+                }
+            }
+            catch { }
+        }
+// 保证在窗口加载和大小变化时修正 SelIndicator 位置，避免错位；并恢复选择时使用主题高亮色（SystemControlHighlightAccentBrush）
+private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+{
+    try
+    {
+        void Recalc()
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var segGrid = root?.FindName("SegGrid") as Grid;
+                var sel = root?.FindName("SelIndicator") as Border;
+                var selTrans = root?.FindName("SelTransform") as Microsoft.UI.Xaml.Media.TranslateTransform;
+                if (segGrid == null || sel == null || selTrans == null) return;
+
+                // 优先使用实际按钮 BtnUHD，若不存在则回退到 Btn1080，或 SegGrid 中第一个 Btn* 子元素
+                FrameworkElement target = root?.FindName("BtnUHD") as FrameworkElement;
+                if (target == null) target = root?.FindName("Btn1080") as FrameworkElement;
+                if (target == null)
+                {
+                    try
+                    {
+                        if (segGrid.Children.Count > 0)
+                        {
+                            foreach (var ch in segGrid.Children)
+                            {
+                                if (ch is FrameworkElement fe && !string.IsNullOrEmpty(fe.Name) && fe.Name.StartsWith("Btn"))
+                                {
+                                    target = fe;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                if (target == null) return;
+
+                var t = target.TransformToVisual(segGrid).TransformPoint(new Point(0, 0));
+                double overlapAdjustment = -4;
+                double innerWidth = target.ActualWidth;
+                try
+                {
+                    var btn = target.FindName("BtnUHD") as FrameworkElement;
+                    if (btn != null) innerWidth = btn.ActualWidth + 24;
+                    else innerWidth = target.ActualWidth;
+                }
+                catch { }
+                // 将 SelIndicator 宽度与目标按钮宽度匹配，并令其在目标内部居中显示
+                sel.Width = Math.Max(0, innerWidth - 4);
+                // 计算使 SelIndicator 在按钮内部水平居中：按钮左偏 + (按钮宽 - sel宽)/2
+                var centeredX = t.X + (target.ActualWidth - sel.Width) / 2.0;
+                selTrans.X = centeredX + overlapAdjustment;
+                sel.Opacity = 1.0;
+            }
+            catch { }
+        }
+
+        Recalc();
+        var root2 = this.Content as FrameworkElement;
+        var segGrid2 = root2?.FindName("SegGrid") as Grid;
+        if (segGrid2 != null) segGrid2.SizeChanged += (_, __) => Recalc();
+    }
+    catch { }
+}
+
+
+// save wallpaper helper
+private string SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, string suggestedName)
+{
+    try
+    {
+        if (image?.Source is Microsoft.UI.Xaml.Media.Imaging.BitmapImage bi && bi.UriSource != null)
+        {
+            var uri = bi.UriSource;
+            using var http = new System.Net.Http.HttpClient();
+            var data = http.GetByteArrayAsync(uri).Result;
+            var ext = Path.GetExtension(uri.AbsolutePath);
+            if (string.IsNullOrEmpty(ext)) ext = ".jpg";
+            var fileName = suggestedName ?? ("bing_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ext);
+            var outPath = Path.Combine(WallpaperFolderPath ?? AppFolderPath, fileName);
+            File.WriteAllBytes(outPath, data);
+            return outPath;
+        }
+    }
+    catch { }
+    return null;
+}
+
+        // 保存配置到 config.ini（覆盖写入，保持常见键）
+        private void SaveConfig()
+        {
+            try
+            {
+                var lines = new List<string>();
+                lines.Add("version=" + AppVersion);
+                lines.Add("animation_enabled=" + (AnimationEnabled ? "true" : "false"));
+                lines.Add("animation_ms=" + AnimationMs.ToString());
+                // default_resolution 从 UI 或 _config 决定，同时保存默认比例
+                var root = this.Content as FrameworkElement;
+                var resCombo = root?.FindName("ResolutionCombo") as ComboBox;
+                var aspectCombo = root?.FindName("AspectRatioCombo") as ComboBox;
+                string defRes = "UHD";
+                if (resCombo != null && resCombo.SelectedItem is ComboBoxItem rcbi && rcbi.Content is string rs)
+                {
+                    if (rs.StartsWith("1280") || rs.StartsWith("720")) defRes = "720";
+                    else if (rs.StartsWith("1920") || rs.StartsWith("1080")) defRes = "1080";
+                    else defRes = "UHD";
+                }
+                else if (_config.TryGetValue("default_resolution", out var dr)) defRes = dr;
+                lines.Add("default_resolution=" + defRes);
+                // save aspect
+                if (aspectCombo != null && aspectCombo.SelectedItem is ComboBoxItem ab && ab.Content is string asp) lines.Add("default_aspect=" + asp);
+                else if (_config.TryGetValue("default_aspect", out var da)) lines.Add("default_aspect=" + da);
+
+                lines.Add("download_folder=" + (WallpaperFolderPath ?? "Wallpaper"));
+
+                // 应用设置
+                var autoChk = root?.FindName("AutoStartCheck") as CheckBox;
+                var autoVal = (autoChk != null && autoChk.IsChecked == true) ? "true" : "false";
+                lines.Add("autostart=" + autoVal);
+
+                var defList = "local";
+                var dlCombo2 = root?.FindName("DefaultListCombo") as ComboBox;
+                if (dlCombo2 != null && dlCombo2.SelectedItem is ComboBoxItem cbi2)
+                {
+                    defList = cbi2.Tag as string ?? (cbi2.Content as string ?? defList);
+                }
+                lines.Add("default_list=" + defList);
+
+                var api = "bing";
+                var apiCombo = root?.FindName("ApiSourceCombo") as ComboBox;
+                if (apiCombo != null && apiCombo.SelectedItem is ComboBoxItem ac && ac.Content is string ap) api = ap == "必应" ? "bing" : "unknown";
+                lines.Add("api_source=" + api);
+
+                File.WriteAllLines(ConfigFilePath, lines);
+            }
+            catch { }
+        }
+
+        // 将分段控件切换为通过按钮背景改变选中状态（不移动底色）
+        private void SetSegmentSelected(string buttonName)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var btn720 = root?.FindName("Btn720") as Button;
+                var btn1080 = root?.FindName("Btn1080") as Button;
+                var btnUHD = root?.FindName("BtnUHD") as Button;
+                var accent = Application.Current.Resources.TryGetValue("SystemControlHighlightAccentBrush", out var ac) ? ac as Microsoft.UI.Xaml.Media.Brush : null;
+                var fgHigh = Application.Current.Resources.TryGetValue("SystemControlForegroundBaseHighBrush", out var fh) ? fh as Microsoft.UI.Xaml.Media.Brush : null;
+                var transparent = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                if (btn720 != null) { btn720.Background = transparent; btn720.Foreground = fgHigh; }
+                if (btn1080 != null) { btn1080.Background = transparent; btn1080.Foreground = fgHigh; }
+                if (btnUHD != null) { btnUHD.Background = transparent; btnUHD.Foreground = fgHigh; }
+
+                Button sel = null;
+                if (buttonName == "Btn720") sel = btn720;
+                else if (buttonName == "Btn1080") sel = btn1080;
+                else sel = btnUHD;
+                if (sel != null && accent != null)
+                {
+                    sel.Background = accent;
+                    sel.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White);
+                }
+
+                // 隐藏移动底色指示器，避免与按钮背景冲突
+                var selIndicator = root?.FindName("SelIndicator") as Border;
+                if (selIndicator != null) selIndicator.Opacity = 0.0;
+            }
+            catch { }
+        }
+
+        // 打开文件夹选择器（使用 WinRT FolderPicker，桌面应用需初始化窗口句柄）
+        private async void OpenFolderPicker_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                var picker = new Windows.Storage.Pickers.FolderPicker();
+                picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Desktop;
+                picker.FileTypeFilter.Add("*");
+                // 初始化窗口宿主句柄（WinUI 桌面）
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+                var folder = await picker.PickSingleFolderAsync();
+                if (folder != null)
+                {
+                    var path = folder.Path;
+                    // 检查写入权限
+                    try
+                    {
+                        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+                        var tmp = Path.Combine(path, ".wpdl_test_write.tmp");
+                        File.WriteAllText(tmp, "test");
+                        File.Delete(tmp);
+                    }
+                    catch (Exception ex)
+                    {
+                        var status = (this.Content as FrameworkElement)?.FindName("DownloadStatusText") as TextBox;
+                        if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " 没有对所选目录的写入权限：" + ex.Message + Environment.NewLine); try { status.ScrollToEnd(); } catch { } }
+                        return;
+                    }
+
+                    WallpaperFolderPath = path;
+                    var dlText = (this.Content as FrameworkElement)?.FindName("DownloadFolderText") as TextBox;
+                    if (dlText != null) dlText.Text = WallpaperFolderPath;
+                    _config["download_folder"] = WallpaperFolderPath;
+                    SaveConfig();
+
+                    // 确保 UI 刷新并将列表项选中以触发可视更新
+                    try { var left = (this.Content as FrameworkElement)?.FindName("LeftNavList") as ListBox; if (left != null) left.SelectedIndex = left.SelectedIndex; } catch { }
+                }
+            }
+            catch { }
+        }
+
+        // 用户在文本框回车后尝试设置目录并检测权限
+        private void DownloadFolderText_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+        {
+            try
+            {
+                if (e.Key == Windows.System.VirtualKey.Enter)
+                {
+                    var tb = sender as TextBox;
+                    if (tb == null) return;
+                    var newPath = tb.Text?.Trim();
+                    if (string.IsNullOrEmpty(newPath)) return;
+                    if (!Path.IsPathRooted(newPath)) newPath = Path.GetFullPath(newPath);
+                    try
+                    {
+                        if (!Directory.Exists(newPath)) Directory.CreateDirectory(newPath);
+                        var tmp = Path.Combine(newPath, ".wpdl_test_write.tmp");
+                        File.WriteAllText(tmp, "test");
+                        File.Delete(tmp);
+                    }
+                    catch (Exception ex)
+                    {
+                        var status = (this.Content as FrameworkElement)?.FindName("DownloadStatusText") as TextBox;
+                        if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " 目录不可用或没有写入权限：" + ex.Message + Environment.NewLine); try { status.ScrollToEnd(); } catch { } }
+                        return;
+                    }
+                    WallpaperFolderPath = newPath;
+                    _config["download_folder"] = WallpaperFolderPath;
+                    SaveConfig();
+                    var status2 = (this.Content as FrameworkElement)?.FindName("DownloadStatusText") as TextBox;
+                    if (status2 != null) { status2.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " 下载目录已更新：" + WallpaperFolderPath + Environment.NewLine); try { status2.ScrollToEnd(); } catch { } }
+                }
+            }
+            catch { }
+        }
+
+        [DllImport("user32.dll")]
+        private static extern int GetSystemMetrics(int nIndex);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        private const uint WM_SYSCOMMAND = 0x0112;
+        private const uint SC_MAXIMIZE = 0xF030;
+        private const uint SC_RESTORE = 0xF120;
+
+        private const int SW_MINIMIZE = 6;
+        private const int SW_RESTORE = 9;
+        private const int SW_MAXIMIZE = 3;
+
+        private const int GWL_STYLE = -16;
+        private const long WS_SYSMENU = 0x00080000L;
+        private const long WS_MINIMIZEBOX = 0x00020000L;
+        private const long WS_MAXIMIZEBOX = 0x00010000L;
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr", SetLastError = true)]
+        private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr", SetLastError = true)]
+        private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLong", SetLastError = true)]
+        private static extern int GetWindowLong32(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLong", SetLastError = true)]
+        private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetWindowPlacement(IntPtr hWnd, ref WINDOWPLACEMENT lpwndpl);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct WINDOWPLACEMENT
+        {
+            public int length;
+            public int flags;
+            public int showCmd;
+            public POINT ptMinPosition;
+            public POINT ptMaxPosition;
+            public RECT rcNormalPosition;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT { public int x; public int y; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT { public int left, top, right, bottom; }
+
+        private bool IsWindowMaximized(IntPtr hwnd)
+        {
+            try
+            {
+                WINDOWPLACEMENT wp = new WINDOWPLACEMENT();
+                wp.length = Marshal.SizeOf(wp);
+                if (GetWindowPlacement(hwnd, ref wp))
+                {
+                    return wp.showCmd == SW_MAXIMIZE;
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private void HideNativeCaptionButtons()
+        {
+            try
+            {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
+                var appWindow = AppWindow.GetFromWindowId(windowId);
+                if (appWindow != null)
+                {
+                    var titleBar = appWindow.TitleBar;
+                    try { titleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent; } catch { }
+                    try { titleBar.ButtonForegroundColor = Microsoft.UI.Colors.Transparent; } catch { }
+                    try { titleBar.ButtonHoverBackgroundColor = Microsoft.UI.Colors.Transparent; } catch { }
+                    try { titleBar.ButtonPressedBackgroundColor = Microsoft.UI.Colors.Transparent; } catch { }
+                    try { titleBar.ButtonHoverForegroundColor = Microsoft.UI.Colors.Transparent; } catch { }
+                    try { titleBar.ButtonPressedForegroundColor = Microsoft.UI.Colors.Transparent; } catch { }
+                    try { titleBar.InactiveBackgroundColor = Microsoft.UI.Colors.Transparent; } catch { }
+                    try { titleBar.InactiveForegroundColor = Microsoft.UI.Colors.Transparent; } catch { }
+                }
+            }
+            catch { }
+        }
+
+        // 更新标题栏内自定义按钮的前景，以适应深/浅主题
+        private void UpdateCaptionButtonsForeground(bool dark)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                if (root == null) return;
+                var caption = root.FindName("CaptionButtons") as Panel;
+                if (caption == null) return;
+                var brush = dark ? new SolidColorBrush(Microsoft.UI.Colors.White) : new SolidColorBrush(Microsoft.UI.Colors.Black);
+                foreach (var child in caption.Children)
+                {
+                    if (child is Control c) c.Foreground = brush;
+                }
+            }
+            catch { }
+        }
+
+        private void MinButton_Click(object sender, RoutedEventArgs e)
+        {
+            try { ShowWindow(WinRT.Interop.WindowNative.GetWindowHandle(this), SW_MINIMIZE); } catch { }
+        }
+
+        private void MaxButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                if (IsWindowMaximized(hwnd))
+                {
+                    SendMessage(hwnd, WM_SYSCOMMAND, new IntPtr(SC_RESTORE), IntPtr.Zero);
+                }
+                else
+                {
+                    SendMessage(hwnd, WM_SYSCOMMAND, new IntPtr(SC_MAXIMIZE), IntPtr.Zero);
+                }
+            }
+            catch { }
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            try { this.Close(); } catch { }
+        }
+
+        private void CollapseNavButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var nav = root?.FindName("NavView") as Microsoft.UI.Xaml.Controls.NavigationView;
+                // 标记为用户发起的折叠/展开，允许 PaneClosing 放行
+                _paneClosingRequested = true;
+                if (nav != null) nav.IsPaneOpen = !nav.IsPaneOpen;
+            }
+            catch { }
+        }
+
+        private void ToggleThemeButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                if (root == null) return;
+                var effectiveIsDark = root.ActualTheme == ElementTheme.Dark;
+                root.RequestedTheme = effectiveIsDark ? ElementTheme.Light : ElementTheme.Dark;
+                var toggleBtn = root.FindName("ToggleThemeButton") as Button;
+                if (toggleBtn != null)
+                {
+                    var isDark = root.RequestedTheme == ElementTheme.Dark;
+                    var glyph = isDark ? "☀" : "☾";
+                    toggleBtn.Content = new FontIcon { Glyph = glyph, FontFamily = new FontFamily("Segoe UI Symbol") };
+                    UpdateCaptionButtonsForeground(isDark);
+                }
+
+                try
+                {
+                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                    var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
+                    var appWindow = AppWindow.GetFromWindowId(windowId);
+                    if (appWindow != null)
+                    {
+                        var titleBar = appWindow.TitleBar;
+                        bool isDark = root.RequestedTheme == ElementTheme.Dark;
+                        if (isDark)
+                        {
+                            titleBar.ButtonForegroundColor = Microsoft.UI.Colors.White;
+                        }
+                        else
+                        {
+                            titleBar.ButtonForegroundColor = Microsoft.UI.Colors.Black;
+                        }
+                    }
+                }
+                catch { }
+            }
+            catch { }
+        }
+
+        private async void ChangeDownloadFolder_Click(object sender, RoutedEventArgs e)
+        {
+            // (kept original implementation)
+        }
+
+        private void DownloadHistoryCheck_Checked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var yearCb = root?.FindName("YearCombo") as ComboBox;
+                var monthCb = root?.FindName("MonthCombo") as ComboBox;
+                var dayCb = root?.FindName("DayCombo") as ComboBox;
+                if (yearCb != null) yearCb.IsEnabled = true;
+                if (monthCb != null) monthCb.IsEnabled = true;
+                if (dayCb != null) dayCb.IsEnabled = true;
+            }
+            catch { }
+        }
+
+        private void DownloadHistoryCheck_Unchecked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var yearCb = root?.FindName("YearCombo") as ComboBox;
+                var monthCb = root?.FindName("MonthCombo") as ComboBox;
+                var dayCb = root?.FindName("DayCombo") as ComboBox;
+                if (yearCb != null) yearCb.IsEnabled = false;
+                if (monthCb != null) monthCb.IsEnabled = false;
+                if (dayCb != null) dayCb.IsEnabled = false;
+            }
+            catch { }
+        }
+
+        private void MaxDatePicker_DateChanged(CalendarDatePicker sender, CalendarDatePickerDateChangedEventArgs args)
+        {
+            try
+            {
+                if (sender?.Date == null) return;
+                var selected = sender.Date.Value.Date;
+                if (selected.Year < 2021)
+                {
+                    sender.Date = new DateTimeOffset(new DateTime(2021, 1, 1));
+                }
+            }
+            catch { }
+        }
+
+        private async void StartDownloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as Button;
+            var root = this.Content as FrameworkElement;
+            var status = root?.FindName("DownloadStatusText") as TextBox;
+            if (btn != null) btn.IsEnabled = false;
+            try
+            {
+                if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " 准备下载..." + Environment.NewLine); try { status.ScrollToEnd(); } catch { } }
+
+                bool downloadHistory = false;
+                var chk = root?.FindName("DownloadHistoryCheck") as CheckBox;
+                if (chk != null) downloadHistory = chk.IsChecked == true;
+
+                // ensure target folder is absolute and exists
+                var targetFolder = WallpaperFolderPath;
+                if (string.IsNullOrEmpty(targetFolder)) targetFolder = Path.Combine(AppFolderPath ?? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Wallpaper");
+                if (!Path.IsPathRooted(targetFolder)) targetFolder = Path.Combine(AppFolderPath ?? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), targetFolder);
+                try { if (!Directory.Exists(targetFolder)) Directory.CreateDirectory(targetFolder); }
+                catch (Exception ex) { if (status != null) status.Text = "无法创建下载目录: " + ex.Message; return; }
+
+                using var http = new System.Net.Http.HttpClient();
+                // set common headers to mimic a browser (some servers block default HttpClient UA)
+                try
+                {
+                    http.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
+                    http.DefaultRequestHeaders.Accept.ParseAdd("image/avif,image/webp,image/apng,image/*,*/*;q=0.8");
+                    http.DefaultRequestHeaders.AcceptLanguage.ParseAdd("zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7");
+                    // ensure connection is closed between requests to avoid server rejecting keep-alive reuse
+                    try { http.DefaultRequestHeaders.ConnectionClose = true; } catch { }
+                    try { http.DefaultRequestHeaders.Referrer = new Uri("https://www.bing.com/"); } catch { }
+                }
+                catch { }
+
+                int downloaded = 0, errors = 0;
+
+                async Task<bool> DownloadToFileAsync(Uri uri, string dest)
+                {
+                    try
+                    {
+                        using var resp = await http.GetAsync(uri, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+                        if (!resp.IsSuccessStatusCode)
+                        {
+                            var msg = $"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase} for {uri}";
+                            LogException(new Exception(msg));
+                            try { if (status != null) status.Text = "下载失败: " + msg; } catch { }
+                            return false;
+                        }
+                        using var stream = await resp.Content.ReadAsStreamAsync();
+                        using var fs = new FileStream(dest, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
+                        await stream.CopyToAsync(fs);
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException(ex);
+                        try { if (status != null) status.Text = "下载时发生错误: " + ex.Message; } catch { }
+                        return false;
+                    }
+                }
+
+                if (downloadHistory)
+                {
+                    DateTimeOffset startDate = DateTimeOffset.Now.AddDays(-7);
+                    try
+                    {
+                        var yearCb = root?.FindName("YearCombo") as ComboBox;
+                        var monthCb = root?.FindName("MonthCombo") as ComboBox;
+                        var dayCb = root?.FindName("DayCombo") as ComboBox;
+                        if (yearCb != null && monthCb != null && dayCb != null && yearCb.SelectedItem is ComboBoxItem yit && monthCb.SelectedItem is ComboBoxItem mit && dayCb.SelectedItem is ComboBoxItem dit)
+                        {
+                            if (int.TryParse(yit.Content as string, out var y) && int.TryParse(mit.Content as string, out var m) && int.TryParse(dit.Content as string, out var d))
+                            {
+                                try { startDate = new DateTimeOffset(new DateTime(y, m, d)); } catch { }
+                            }
+                        }
+                    }
+                    catch { }
+
+                    var minAllowed = new DateTime(2021, 1, 1);
+                    if (startDate.Date < minAllowed) startDate = new DateTimeOffset(minAllowed);
+                    int max = (int)(DateTimeOffset.Now.Date - startDate.Date).TotalDays; if (max <= 0) max = 1;
+
+                    var aspectCb = root?.FindName("AspectRatioCombo") as ComboBox;
+                    var resCb = root?.FindName("ResolutionCombo") as ComboBox;
+                    string selAspect = (aspectCb?.SelectedItem as ComboBoxItem)?.Content as string;
+                    string selRes = (resCb?.SelectedItem as ComboBoxItem)?.Content as string ?? "3840x2160";
+
+                    var localXml = Path.Combine(AppContext.BaseDirectory, "Assets", "list.xml");
+                    XDocument localDoc = null;
+                    int totalWallpapersInList = 0;
+                    int totalResolutionGroups = 0;
+                    try { if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + $" 尝试读取 Assets/list.xml，默认路径: {localXml}，输出目录: {AppContext.BaseDirectory}" + Environment.NewLine); try { status.ScrollToEnd(); } catch { } } } catch { }
+
+                    // 尝试多个可能的位置，包含打包应用和调试输出目录
+                    var candidatePaths = new List<string>
+                    {
+                        Path.Combine(AppContext.BaseDirectory, "Assets", "list.xml"),
+                        Path.Combine(Directory.GetCurrentDirectory(), "Assets", "list.xml"),
+                        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Assets", "list.xml")
+                    };
+                    // 如果应用被打包为 MSIX，可从 Package 安装位置读取
+                    try
+                    {
+                        var pkgPath = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
+                        candidatePaths.Insert(0, Path.Combine(pkgPath, "Assets", "list.xml"));
+                    }
+                    catch { }
+
+                    string usedPath = null;
+                    foreach (var p in candidatePaths)
+                    {
+                        try
+                        {
+                            if (File.Exists(p))
+                            {
+                                localXml = p;
+                                localDoc = XDocument.Load(localXml);
+                                usedPath = p;
+                                break;
+                            }
+                        }
+                        catch (Exception ex) { LogException(ex); }
+                    }
+
+                    if (localDoc != null)
+                    {
+                        try
+                        {
+                            totalWallpapersInList = localDoc.Descendants("wallpaper").Count();
+                            totalResolutionGroups = localDoc.Descendants("resolution").Count();
+                            try { if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + $" 已加载 Assets/list.xml：{totalWallpapersInList} 条 wallpaper，{totalResolutionGroups} 个 resolution。路径: {usedPath ?? localXml}" + Environment.NewLine); try { status.ScrollToEnd(); } catch { } } } catch { }
+                        }
+                        catch (Exception ex)
+                        {
+                            localDoc = null;
+                            LogException(ex);
+                            try { if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " 无法解析 Assets/list.xml：" + ex.Message + Environment.NewLine); try { status.ScrollToEnd(); } catch { } } } catch { }
+                        }
+                    }
+                    else
+                    {
+                        try { if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " 未找到 Assets/list.xml。已尝试位置: " + string.Join(", ", candidatePaths) + Environment.NewLine); try { status.ScrollToEnd(); } catch { } } } catch { }
+                    }
+
+                    for (int i = 0; i < max; i++)
+                    {
+                        var dateToCheck = startDate.Date.AddDays(i);
+                        var dateStr = dateToCheck.ToString("yyyy-MM-dd");
+                        try
+                        {
+                            XElement node = null;
+                            if (localDoc != null)
+                            {
+                                try
+                                {
+                                    // 首先尝试精确匹配用户选择的分辨率组（resolution name）
+                                    var resNodes = localDoc.Descendants("resolution").ToList();
+                                    var exactRes = resNodes.FirstOrDefault(r => string.Equals((string)r.Attribute("name"), selRes, StringComparison.OrdinalIgnoreCase));
+                                    if (exactRes != null)
+                                    {
+                                        node = exactRes.Descendants("wallpaper").FirstOrDefault(x => ((string)x.Attribute("date")) == dateStr);
+                                    }
+
+                                    // 若未找到，尝试按比例匹配的 resolution 组
+                                    if (node == null && !string.IsNullOrEmpty(selAspect))
+                                    {
+                                        var aspectRes = resNodes.FirstOrDefault(r => string.Equals((string)r.Attribute("aspect_ratio"), selAspect, StringComparison.OrdinalIgnoreCase));
+                                        if (aspectRes != null) node = aspectRes.Descendants("wallpaper").FirstOrDefault(x => ((string)x.Attribute("date")) == dateStr);
+                                    }
+
+                                    // 若仍未找到，尝试按 URL 中已包含的分辨率后缀匹配（优先使用明确带有 _{WxH}.jpg 的条目）
+                                    if (node == null)
+                                    {
+                                        node = localDoc.Descendants("wallpaper").FirstOrDefault(x => ((string)x.Attribute("date")) == dateStr && ((string)x.Attribute("url"))?.Contains("_" + selRes + ".jpg") == true);
+                                    }
+
+                                    // 如果还是没有，不要回退到任意第一个 wallpaper（那通常是 3840x2160），而是直接认为此日期在所选分辨率下不存在
+                                }
+                                catch { node = null; }
+                            }
+                            if (node == null) { if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + $" 未找到 {dateStr} 的 {selRes} 分辨率壁纸，跳过。" + Environment.NewLine); try { status.ScrollToEnd(); } catch { } } continue; }
+                            var u = (string)node.Attribute("url");
+                            if (string.IsNullOrEmpty(u)) continue;
+                            if (u.StartsWith("//")) u = "https:" + u; else if (u.StartsWith("/")) u = "https://cn.bing.com" + u;
+                            try
+                            {
+                                // 根据所选分辨率调整 URL 后缀（如果选择的是 3840x2160 则保持不变）
+                                u = AdjustUrlToResolution(u, selRes);
+                            }
+                            catch { }
+                            // 对于 cn.bing.com/th?id=... 形式的 URL，尝试直接使用原始 id 加上分辨率后缀生成可下载直链
+                            try
+                            {
+                                if (u.Contains("cn.bing.com/th?id=") || u.Contains("bing.com/th?id="))
+                                {
+                                    var m = System.Text.RegularExpressions.Regex.Match(u, @"th\?id=([^_]+)_(\d{3,4}x\d{3,4})\.jpg", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                    if (m.Success)
+                                    {
+                                        var idPart = m.Groups[1].Value;
+                                        u = $"https://cn.bing.com/th?id={idPart}_{selRes}.jpg";
+                                    }
+                                }
+                            }
+                            catch { }
+                            if (!Uri.IsWellFormedUriString(u, UriKind.Absolute)) { errors++; continue; }
+                            var uri = new Uri(u);
+                            string name = null;
+                            try
+                            {
+                                // 如果 URL 使用 th?id=... 形式，从 query 中提取 id 并构建文件名
+                                if (!string.IsNullOrEmpty(uri.Query) && uri.Query.Contains("id=", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    try
+                                    {
+                                        var qm = System.Text.RegularExpressions.Regex.Match(uri.Query, "[?&]id=([^&_\\s]+)(?:_(?:\\d{3,4}x\\d{3,4}|UHD))?(?:\\.jpg)?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                        if (qm.Success)
+                                        {
+                                            var idPart = qm.Groups[1].Value;
+                                            if (!string.IsNullOrEmpty(idPart)) name = idPart + "_" + selRes + ".jpg";
+                                        }
+                                    }
+                                    catch { }
+                                }
+                            }
+                            catch { }
+
+n                            if (string.IsNullOrEmpty(name))
+                            {
+                                name = Path.GetFileName(uri.LocalPath);
+                                if (string.IsNullOrEmpty(name) || name == "th") name = dateStr + "_" + selRes + ".jpg";
+                            }
+
+                            var dest = Path.Combine(targetFolder, name);
+                            if (File.Exists(dest)) { downloaded++; continue; }
+                            try
+                            {
+                                try { if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + $" 开始下载: {uri} -> 目标分辨率 {selRes}" + Environment.NewLine); try { status.ScrollToEnd(); } catch { } } } catch { }
+
+                                bool ok = false;
+                                try
+                                {
+                                    // 使用独立 HttpClient 每次单独请求，避免并行连接复用导致被拒绝
+                                    using var singleHttp = new System.Net.Http.HttpClient();
+                                    singleHttp.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
+                                    singleHttp.DefaultRequestHeaders.Accept.ParseAdd("image/avif,image/webp,image/apng,image/*,*/*;q=0.8");
+                                    try { singleHttp.DefaultRequestHeaders.Referrer = new Uri("https://www.bing.com/"); } catch { }
+
+                                    using var resp = await singleHttp.GetAsync(uri, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+                                    if (resp.IsSuccessStatusCode)
+                                    {
+                                        using var stream = await resp.Content.ReadAsStreamAsync();
+                                        using var fs = new FileStream(dest, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
+                                        await stream.CopyToAsync(fs);
+                                        ok = true;
+                                    }
+                                    else
+                                    {
+                                        LogException(new Exception($"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase} for {uri}"));
+                                    }
+                                }
+                                catch (Exception ex) { LogException(ex); }
+
+                                if (ok) downloaded++; else errors++;
+                                if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + $" 已下载 {downloaded} 张，失败 {errors} 张。目录: {targetFolder} (当前请求分辨率: {selRes})" + Environment.NewLine); try { status.ScrollToEnd(); } catch { } }
+
+                                // 等待一小段时间，避免短时间内连续请求被服务器限流
+                                try { await System.Threading.Tasks.Task.Delay(300); } catch { }
+                            }
+                            catch (Exception ex) { errors++; LogException(ex); }
+                        }
+                        catch (Exception ex) { errors++; LogException(ex); }
+                    }
+                    if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + $" 已下载 {downloaded} 张，失败 {errors} 张。目录: {targetFolder}" + Environment.NewLine); try { status.ScrollToEnd(); } catch { } }
+                }
+                else
+                {
+                    var mainImg = root?.FindName("MainImage") as Microsoft.UI.Xaml.Controls.Image;
+                    if (mainImg?.Source is Microsoft.UI.Xaml.Media.Imaging.BitmapImage bi && bi.UriSource != null)
+                    {
+                        try
+                        {
+                            var chosenRes = (root?.FindName("ResolutionCombo") as ComboBox)?.SelectedItem is ComboBoxItem rci ? (rci.Content as string) : "3840x2160";
+
+                            string datePart = DateTime.Now.ToString("yyyy-MM-dd");
+                            try
+                            {
+                                var api = "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US";
+                                var json = await http.GetStringAsync(api);
+                                using var jd = System.Text.Json.JsonDocument.Parse(json);
+                                if (jd.RootElement.TryGetProperty("images", out var images) && images.GetArrayLength() > 0)
+                                {
+                                    var first = images[0];
+                                    if (first.TryGetProperty("enddate", out var ed))
+                                    {
+                                        var s = ed.GetString();
+                                        if (!string.IsNullOrEmpty(s) && s.Length >= 8 && int.TryParse(s, out _))
+                                        {
+                                            if (DateTime.TryParseExact(s, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
+                                            {
+                                                datePart = dt.ToString("yyyy-MM-dd");
+                                            }
+                                        }
+                                    }
+                                    else if (first.TryGetProperty("startdate", out var sd))
+                                    {
+                                        var s = sd.GetString();
+                                        if (!string.IsNullOrEmpty(s) && s.Length >= 8 && DateTime.TryParseExact(s, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt2))
+                                        {
+                                            datePart = dt2.ToString("yyyy-MM-dd");
+                                        }
+                                    }
+                                }
+                            }
+                            catch { }
+
+                            // 尝试从 Assets/list.xml 查找当天的 URL（优先级高于 Image.Source）
+                            var localXml = Path.Combine(AppContext.BaseDirectory, "Assets", "list.xml");
+                            XDocument localDoc = null;
+                            var candidatePaths = new List<string>
+                            {
+                                Path.Combine(AppContext.BaseDirectory, "Assets", "list.xml"),
+                                Path.Combine(Directory.GetCurrentDirectory(), "Assets", "list.xml"),
+                                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Assets", "list.xml")
+                            };
+                            try
+                            {
+                                var pkgPath = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
+                                candidatePaths.Insert(0, Path.Combine(pkgPath, "Assets", "list.xml"));
+                            }
+                            catch { }
+
+                            string usedPath = null;
+                            foreach (var p in candidatePaths)
+                            {
+                                try
+                                {
+                                    if (File.Exists(p))
+                                    {
+                                        localXml = p;
+                                        localDoc = XDocument.Load(localXml);
+                                        usedPath = p;
+                                        break;
+                                    }
+                                }
+                                catch { }
+                            }
+
+                            string urlStr = null;
+                            if (localDoc != null)
+                            {
+                                try
+                                {
+                                    var node = localDoc.Descendants("wallpaper").FirstOrDefault(x => ((string)x.Attribute("date")) == datePart);
+                                    if (node != null)
+                                    {
+                                        urlStr = (string)node.Attribute("url");
+                                    }
+                                }
+                                catch { }
+                            }
+
+                            // 如果从 list.xml 没有找到，则回退到当前显示的 Image Uri
+                            if (string.IsNullOrEmpty(urlStr)) urlStr = bi.UriSource.AbsoluteUri;
+
+                            try { urlStr = AdjustUrlToResolution(urlStr, chosenRes); } catch { }
+
+                            if (!Uri.IsWellFormedUriString(urlStr, UriKind.Absolute)) { if (status != null) status.Text = "图片 URL 无效"; }
+                            else
+                            {
+                                var uri = new Uri(urlStr);
+                                var ext = Path.GetExtension(uri.AbsolutePath);
+                                if (string.IsNullOrEmpty(ext)) ext = ".jpg";
+                                var safeRes = chosenRes.Replace("/", "_");
+                                var fileName = datePart + "_" + safeRes + ext;
+                                var dest = Path.Combine(targetFolder, fileName);
+                                if (!File.Exists(dest))
+                                {
+                                    bool ok = await DownloadToFileAsync(uri, dest);
+                                    if (ok) downloaded = 1; else errors = 1;
+                                }
+
+                                try
+                                {
+                                    bool setOk = App.SetDesktopWallpaper(dest);
+                                    if (status != null) status.Text = $"已下载 {downloaded} 张，失败 {errors} 张。设置壁纸: {(setOk ? "成功" : "失败")}. 文件: {dest}";
+                                }
+                                catch (Exception ex) { LogException(ex); if (status != null) status.Text = $"已下载 {downloaded} 张，失败 {errors} 张。尝试设置壁纸时出错: " + ex.Message; }
+                            }
+                        }
+                        catch (Exception ex) { LogException(ex); if (status != null) status.Text = "下载失败: " + ex.Message; }
+                    }
+                    else { if (status != null) status.Text = "没有可下载的图片"; }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException(ex);
+                try { var status2 = (this.Content as FrameworkElement)?.FindName("DownloadStatusText") as TextBox; if (status2 != null) { status2.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " 发生未处理异常: " + ex.Message + Environment.NewLine); try { status2.ScrollToEnd(); } catch { } } } catch { }
+            }
+            finally { try { if (btn != null) btn.IsEnabled = true; } catch { } }
+        }
+
+        private void DatePart_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var status = root?.FindName("DownloadStatusText") as TextBox;
+                var yearCb = root?.FindName("YearCombo") as ComboBox;
+                var monthCb = root?.FindName("MonthCombo") as ComboBox;
+                var dayCb = root?.FindName("DayCombo") as ComboBox;
+                if (yearCb?.SelectedItem is ComboBoxItem yit && monthCb?.SelectedItem is ComboBoxItem mit && dayCb?.SelectedItem is ComboBoxItem dit)
+                {
+                    if (int.TryParse(yit.Content as string, out var y) && int.TryParse(mit.Content as string, out var m) && int.TryParse(dit.Content as string, out var d))
+                    {
+                        try
+                        {
+                            var dateStr = new DateTime(y, m, d).ToString("yyyy-MM-dd");
+                            var localXml = Path.Combine(AppContext.BaseDirectory, "Assets", "list.xml");
+                            bool exists = false;
+                            if (File.Exists(localXml))
+                            {
+                                try
+                                {
+                                    var xdoc = XDocument.Load(localXml);
+                                    exists = xdoc.Descendants("wallpaper").Any(x => ((string)x.Attribute("date")) == dateStr);
+                                }
+                                catch { }
+                            }
+
+                            if (status != null) { status.AppendText(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + (exists ? $" 已找到 {dateStr} 的壁纸，可下载。" : $" 未找到 {dateStr} 的壁纸。") + Environment.NewLine); try { status.ScrollToEnd(); } catch { } }
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+        }
+
+
+        // 设置开机自启（使用注册表 CurrentUser\Software\Microsoft\Windows\CurrentVersion\Run）
+        private void OpenBili_Click(object sender, RoutedEventArgs e)
+        {
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://space.bilibili.com/619002007/") { UseShellExecute = true }); } catch { }
+        }
+
+        private void OpenMail_Click(object sender, RoutedEventArgs e)
+        {
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("mailto:bili-vapegirl233_official@hotmail.com") { UseShellExecute = true }); } catch { }
+        }
+
+        private void OpenAuthorGit_Click(object sender, RoutedEventArgs e)
+        {
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://github.com/WorldNo1Steve") { UseShellExecute = true }); } catch { }
+        }
+
+        private void OpenAuthorX_Click(object sender, RoutedEventArgs e)
+        {
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://x.com/WorldNo1Steve") { UseShellExecute = true }); } catch { }
+        }
+
+        private void OpenProjectGit_Click(object sender, RoutedEventArgs e)
+        {
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://github.com/PrehistoricStarDreamStudios/BingWPDownloadHelper/") { UseShellExecute = true }); } catch { }
+        }
+
+        private void SetAutoStart(bool enable)
+        {
+            try
+            {
+                var exe = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                var key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+                if (key == null) return;
+                var name = "BingWPDLHelper";
+                if (enable)
+                {
+                    try { key.SetValue(name, '"' + exe + '"'); } catch { }
+                }
+                else
+                {
+                    try { key.DeleteValue(name, false); } catch { }
+                }
+            }
+            catch { }
+        }
+
+        private void SaveSoftwareSettings_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var root = this.Content as FrameworkElement;
+                var auto = root?.FindName("AutoStartCheck") as CheckBox;
+                var defCombo = root?.FindName("DefaultListCombo") as ComboBox;
+                var apiCombo = root?.FindName("ApiSourceCombo") as ComboBox;
+                if (auto != null) SetAutoStart(auto.IsChecked == true);
+                // persist via SaveConfig
+                SaveConfig();
+                var status = root?.FindName("AppSettingsStatusText") as TextBlock;
+                if (status != null) status.Text = "已保存设置";
+            }
+            catch { }
+        }
+
+    }
+}

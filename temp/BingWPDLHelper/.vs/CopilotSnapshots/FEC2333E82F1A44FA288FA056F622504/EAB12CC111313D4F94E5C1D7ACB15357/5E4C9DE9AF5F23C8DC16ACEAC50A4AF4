@@ -1,0 +1,47 @@
+﻿using System;
+using System.Runtime.InteropServices;
+
+namespace BingWPDLHelper
+{
+    internal static class WindowHook
+    {
+        private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+        private static WndProcDelegate _wndProcDelegate = new WndProcDelegate(WndProc);
+        private static IntPtr _oldProc = IntPtr.Zero;
+
+        public static void SetWindowProc(IntPtr hwnd)
+        {
+            _oldProc = SetWindowLongPtr(hwnd, -4, Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+        }
+
+        private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+        {
+            const uint WM_CLOSE = 0x0010;
+            try
+            {
+                if (msg == WM_CLOSE)
+                {
+                    // hide window instead of closing
+                    // cannot reliably map hwnd to WinUI Window here; simply post a message or ignore to prevent close
+                    try
+                    {
+                        // send a custom WM_APP message to the process main thread to hide the window via MainWindow API
+                        // not implemented: consumer should call mw.HideFromHook equivalent via IPC if needed
+                    }
+                    catch { }
+                    return CallWindowProc(_oldProc, hWnd, msg, wParam, lParam);
+                }
+            }
+            catch { }
+            return CallWindowProc(_oldProc, hWnd, msg, wParam, lParam);
+        }
+
+        #region native
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
+        private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll", EntryPoint = "CallWindowProcW", SetLastError = true)]
+        private static extern IntPtr CallWindowProc(IntPtr lpPrevWndFunc, IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+        #endregion
+    }
+}

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="MainWindow.Title" xml:space="preserve"><value>Bing Wallpaper Downloader</value></data>
+  <data name="AppTitleText.Text" xml:space="preserve"><value>Bing Wallpaper Downloader</value></data>
+  <data name="CollapseNavBtn.ToolTipService.ToolTip" xml:space="preserve"><value>Collapse/Expand navigation</value></data>
+  <data name="ToggleThemeBtn.ToolTipService.ToolTip" xml:space="preserve"><value>Toggle theme</value></data>
+
+  <data name="NavToday.Content" xml:space="preserve"><value>Today</value></data>
+  <data name="NavDownload.Content" xml:space="preserve"><value>Download</value></data>
+  <data name="NavPreview.Content" xml:space="preserve"><value>Preview</value></data>
+  <data name="NavSetWallpaper.Content" xml:space="preserve"><value>Set Wallpaper</value></data>
+  <data name="NavAbout.Content" xml:space="preserve"><value>About</value></data>
+  <data name="NavSettings.Content" xml:space="preserve"><value>Settings</value></data>
+
+  <data name="DownloadPageTitle.Text" xml:space="preserve"><value>Download Wallpaper</value></data>
+  <data name="DownloadFolderLabel.Text" xml:space="preserve"><value>Folder:</value></data>
+  <data name="BrowseBtn.ToolTipService.ToolTip" xml:space="preserve"><value>Browse folder</value></data>
+  <data name="BrowseBtn2.ToolTipService.ToolTip" xml:space="preserve"><value>Browse folder</value></data>
+  <data name="AspectRatioLabel.Text" xml:space="preserve"><value>Aspect:</value></data>
+  <data name="ResolutionLabel.Text" xml:space="preserve"><value> Resolution:</value></data>
+  <data name="DownloadHistoryChk.Content" xml:space="preserve"><value>Download history</value></data>
+  <data name="StartDateLabel.Text" xml:space="preserve"><value> Start date:</value></data>
+  <data name="StartDownloadBtn.Content" xml:space="preserve"><value>Start Download</value></data>
+
+  <data name="SetWallpaperPageTitle.Text" xml:space="preserve"><value>Set Wallpaper</value></data>
+  <data name="OpenPersonalizationBtn.Content" xml:space="preserve"><value>Open Windows Personalization</value></data>
+  <data name="PersonalizationHint.Text" xml:space="preserve"><value>Click above to configure wallpaper, colors, lock screen in Windows Settings. Below is the app slideshow batch setting:</value></data>
+  <data name="SlideshowFolderLabel.Text" xml:space="preserve"><value>Slideshow folder:</value></data>
+  <data name="IntervalLabel.Text" xml:space="preserve"><value>Interval:</value></data>
+  <data name="Interval1m.Content" xml:space="preserve"><value>1 minute</value></data>
+  <data name="Interval10m.Content" xml:space="preserve"><value>10 minutes</value></data>
+  <data name="Interval30m.Content" xml:space="preserve"><value>30 minutes</value></data>
+  <data name="Interval1h.Content" xml:space="preserve"><value>1 hour</value></data>
+  <data name="Interval6h.Content" xml:space="preserve"><value>6 hours</value></data>
+  <data name="Interval1d.Content" xml:space="preserve"><value>1 day</value></data>
+  <data name="ShuffleChk.Content" xml:space="preserve"><value>Shuffle</value></data>
+  <data name="FillModeLabel.Text" xml:space="preserve"><value>Fill mode:</value></data>
+  <data name="FillFill.Content" xml:space="preserve"><value>Fill</value></data>
+  <data name="FillFit.Content" xml:space="preserve"><value>Fit</value></data>
+  <data name="FillStretch.Content" xml:space="preserve"><value>Stretch</value></data>
+  <data name="FillTile.Content" xml:space="preserve"><value>Tile</value></data>
+  <data name="FillCenter.Content" xml:space="preserve"><value>Center</value></data>
+  <data name="FillSpan.Content" xml:space="preserve"><value>Span</value></data>
+  <data name="ApplySettingsBtn.Content" xml:space="preserve"><value>Apply</value></data>
+
+  <data name="AppSettingsPageTitle.Text" xml:space="preserve"><value>Settings</value></data>
+  <data name="AutoStartChk.Content" xml:space="preserve"><value>Start with Windows</value></data>
+  <data name="CloseBehaviorLabel.Text" xml:space="preserve"><value>On close:</value></data>
+  <data name="CloseTray.Content" xml:space="preserve"><value>Minimize to tray</value></data>
+  <data name="CloseExit.Content" xml:space="preserve"><value>Exit</value></data>
+  <data name="ThemeModeLabel.Text" xml:space="preserve"><value>Theme:</value></data>
+  <data name="ThemeSystem.Content" xml:space="preserve"><value>System</value></data>
+  <data name="ThemeLight.Content" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemeDark.Content" xml:space="preserve"><value>Dark</value></data>
+  <data name="ColorThemeLabel.Text" xml:space="preserve"><value>Accent:</value></data>
+  <data name="ColorSystem.Content" xml:space="preserve"><value>System</value></data>
+  <data name="ColorBlue.Content" xml:space="preserve"><value>Blue</value></data>
+  <data name="ColorGreen.Content" xml:space="preserve"><value>Green</value></data>
+  <data name="ColorOrange.Content" xml:space="preserve"><value>Orange</value></data>
+  <data name="ColorPurple.Content" xml:space="preserve"><value>Purple</value></data>
+  <data name="ColorPink.Content" xml:space="preserve"><value>Pink</value></data>
+  <data name="DownloadThreadsLabel.Text" xml:space="preserve"><value>Threads:</value></data>
+  <data name="DownloadThreadsHint.Text" xml:space="preserve"><value>(1-32, default 4)</value></data>
+  <data name="LanguageLabel.Text" xml:space="preserve"><value>Language:</value></data>
+  <data name="LangZhCN.Content" xml:space="preserve"><value>简体中文（中国大陆）</value></data>
+  <data name="LangZhHK.Content" xml:space="preserve"><value>繁體中文（中國香港、中國澳門）</value></data>
+  <data name="LangZhTW.Content" xml:space="preserve"><value>繁體中文（中國台灣）</value></data>
+  <data name="LangEnUS.Content" xml:space="preserve"><value>English (United States)</value></data>
+  <data name="LangEnGB.Content" xml:space="preserve"><value>English (United Kingdom)</value></data>
+  <data name="AutoUpdateListChk.Content" xml:space="preserve"><value>Auto-update list (daily from GitHub)</value></data>
+  <data name="CheckUpdateNowBtn.Content" xml:space="preserve"><value>Check now</value></data>
+  <data name="DefaultListLabel.Text" xml:space="preserve"><value>Default list:</value></data>
+  <data name="ListLocal.Content" xml:space="preserve"><value>Local</value></data>
+  <data name="ApiSourceLabel.Text" xml:space="preserve"><value>API:</value></data>
+  <data name="ApiBing.Content" xml:space="preserve"><value>Bing</value></data>
+  <data name="SaveSettingsBtn.Content" xml:space="preserve"><value>Save</value></data>
+
+  <data name="AboutPageTitle.Text" xml:space="preserve"><value>About</value></data>
+  <data name="AboutAuthorExpander.Header" xml:space="preserve"><value>About Author</value></data>
+  <data name="AboutBiliBtn.Content" xml:space="preserve"><value>Bilibili</value></data>
+  <data name="AboutMailBtn.Content" xml:space="preserve"><value>Email</value></data>
+  <data name="AboutProjectExpander.Header" xml:space="preserve"><value>About Project</value></data>
+  <data name="AboutProjectGitBtn.Content" xml:space="preserve"><value>Project GitHub</value></data>
+
+  <data name="PreviewPageTitle.Text" xml:space="preserve"><value>Wallpaper Preview</value></data>
+  <data name="TagFilterLabel.Text" xml:space="preserve"><value>Tag filter:</value></data>
+
+  <data name="TrayShow" xml:space="preserve"><value>Show</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Exit</value></data>
+  <data name="TrayTooltip" xml:space="preserve"><value>Bing Wallpaper Downloader</value></data>
+  <data name="SettingsSavedRestartHint" xml:space="preserve"><value>Settings saved. Some changes require restart.</value></data>
+  <data name="MsgNeedRestartForLanguage" xml:space="preserve"><value>Language change requires restart to fully apply.</value></data>
+</root>

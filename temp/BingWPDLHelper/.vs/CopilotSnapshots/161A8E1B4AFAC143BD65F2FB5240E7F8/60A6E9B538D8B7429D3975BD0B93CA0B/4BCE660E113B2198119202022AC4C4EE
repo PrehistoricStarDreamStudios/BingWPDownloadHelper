@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="BingWPDLHelper.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BingWPDLHelper"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="必应壁纸下载器">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.Resources>
+            <Style x:Key="CaptionButtonStyle" TargetType="Button">
+                <!-- 调整为与系统标题栏按钮更接近的尺寸与间距 -->
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Width" Value="46" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Foreground" Value="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="CloseCaptionButtonStyle" TargetType="Button" BasedOn="{StaticResource CaptionButtonStyle}">
+                <Setter Property="Foreground" Value="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid x:Name="Root" Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Fluent 风格自定义标题栏 -->
+        <Border x:Name="AppTitleBar"
+                Grid.Row="0"
+                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                Padding="12,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- 可拖动的区域，仅在此区域拖动窗口 -->
+                <Grid x:Name="DragRegion" Grid.Column="0" IsHitTestVisible="False">
+                    <TextBlock Text="必应壁纸下载器"
+                               VerticalAlignment="Center"
+                               Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                </Grid>
+
+                <!-- 右侧区域：仅放置主题切换按钮，靠近系统原生按钮 -->
+                <StackPanel x:Name="CaptionHost" Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,6,0">
+                    <Button x:Name="ToggleThemeButton"
+                            Click="ToggleThemeButton_Click"
+                            ToolTipService.ToolTip="切换深浅模式"
+                            Style="{StaticResource CaptionButtonStyle}">
+                        <FontIcon x:Name="ToggleIcon" Glyph="☀" FontFamily="Segoe UI Symbol" FontSize="14" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <!-- 主内容区：两列布局，左侧为目录（20%），右侧为内容（80%） -->
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.2*" />
+                <ColumnDefinition Width="0.8*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 左侧目录面板，圆角，使用系统主题刷作为背景以符合 Fluent 风格 -->
+            <Border Grid.Column="0"
+                    Margin="12,8,8,12"
+                    Padding="12"
+                    CornerRadius="8"
+                    Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                <StackPanel>
+                    <ListBox SelectionMode="Single" SelectedIndex="0" Background="Transparent" BorderThickness="0">
+                        <ListBoxItem Content="今日壁纸" />
+                        <ListBoxItem Content="下载壁纸" />
+                        <ListBoxItem Content="设置壁纸" />
+                        <ListBoxItem Content="软件设置" />
+                        <ListBoxItem Content="关于" />
+                    </ListBox>
+                </StackPanel>
+            </Border>
+
+            <!-- 右侧主内容区（占用剩余 80% 宽度） -->
+            <Grid Grid.Column="1" Margin="8,8,12,12">
+                <!-- 这里放置应用主内容 -->
+            </Grid>
+        </Grid>
+
+    </Grid>
+</Window>

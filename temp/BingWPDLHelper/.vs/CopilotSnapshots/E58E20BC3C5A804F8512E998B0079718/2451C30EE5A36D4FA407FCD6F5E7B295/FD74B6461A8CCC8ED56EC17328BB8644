@@ -1,0 +1,154 @@
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+using Microsoft.UI.Xaml.Shapes;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.Activation;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Security.Principal;
+using System.Reflection;
+using Microsoft.Win32;
+
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace BingWPDLHelper
+{
+    /// <summary>
+    /// Provides application-specific behavior to supplement the default Application class.
+    /// </summary>
+    public partial class App : Application
+    {
+        private Window? _window;
+
+        /// <summary>
+        /// Initializes the singleton application object.  This is the first line of authored code
+        /// executed, and as such is the logical equivalent of main() or WinMain().
+        /// </summary>
+        public App()
+        {
+            InitializeComponent();
+        }
+
+        /// <summary>
+        /// Invoked when the application is launched.
+        /// </summary>
+        /// <param name="args">Details about the launch request and process.</param>
+        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        {
+            try
+            {
+                // If not elevated, attempt to relaunch elevated. If user declines, continue non-elevated.
+                if (!IsProcessElevated())
+                {
+                    try
+                    {
+                        var exe = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
+                        if (!string.IsNullOrEmpty(exe))
+                        {
+                            var psi = new ProcessStartInfo
+                            {
+                                FileName = exe,
+                                UseShellExecute = true,
+                                Verb = "runas"
+                            };
+                            Process.Start(psi);
+                            Environment.Exit(0);
+                            return;
+                        }
+                    }
+                    catch { /* user refused elevation or failed; continue */ }
+                }
+            }
+            catch { }
+
+            _window = new MainWindow();
+            _window.Activate();
+
+            // tray removed per user request
+        }
+
+        private bool IsProcessElevated()
+        {
+            try
+            {
+                using var identity = WindowsIdentity.GetCurrent();
+                var principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+            catch { return false; }
+        }
+
+        private void TryInvokeMainWindowAction(Action<MainWindow> act)
+        {
+            try
+            {
+                if (_window is MainWindow mw)
+                {
+                    act(mw);
+                }
+            }
+            catch { }
+        }
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+
+        private const int SPI_SETDESKWALLPAPER = 20;
+        private const int SPIF_UPDATEINIFILE = 0x01;
+        private const int SPIF_SENDWININICHANGE = 0x02;
+
+        // Sets wallpaper using multiple approaches for Win10 compatibility:
+        // 1) Try SystemParametersInfo with provided path
+        // 2) If fails or opens Settings, fall back to writing registry and calling SystemParametersInfo
+        // 3) Ensure path is BMP copy for best compatibility
+        public static bool SetDesktopWallpaper(string imagePath)
+        {
+            if (string.IsNullOrEmpty(imagePath) || !File.Exists(imagePath))
+                return false;
+
+            try
+            {
+                // First try direct API call
+                int res = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, imagePath, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+                if (res != 0)
+                    return true;
+
+                // If direct call failed, try using registry method (HKCU\\Control Panel\\Desktop) without conversion
+                try
+                {
+                    string bmpPath = imagePath;
+
+                    using (var key = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", true))
+                    {
+                        if (key != null)
+                        {
+                            key.SetValue("Wallpaper", bmpPath);
+                            key.SetValue("WallpaperStyle", "2"); // stretched
+                            key.SetValue("TileWallpaper", "0");
+                        }
+                    }
+
+                    res = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, bmpPath, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+                    return res != 0;
+                }
+                catch { return false; }
+            }
+            catch { return false; }
+        }
+    }
+}

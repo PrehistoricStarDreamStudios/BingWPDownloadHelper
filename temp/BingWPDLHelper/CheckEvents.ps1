@@ -1,0 +1,1 @@
+﻿Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=(Get-Date).AddMinutes(-5)} -MaxEvents 20 | Where-Object { $_.Message -match 'BingPaper' } | Select-Object TimeCreated, Id, Message | Format-List

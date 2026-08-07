@@ -1,0 +1,58 @@
+name: Update Wallpaper List
+
+# 每日自动获取必应壁纸，调用智谱 GLM 视觉模型分类，更新 Assets/list.xml 并推送。
+# 软件端可通过远程拉取本仓库的 Assets/list.xml 获取已分类的最新列表。
+#
+# 需在仓库 Settings → Secrets 中配置：
+#   ZHIPU_API_KEY  : 智谱开放平台 API Key (https://open.bigmodel.cn/)
+
+on:
+  schedule:
+    # 每天 17:00 UTC = 北京时间次日 01:00（必应当日壁纸通常已更新）
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: '指定日期 YYYY-MM-DD（留空则取当天）'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-wallpaper-list
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Fetch & classify wallpaper, update list.xml
+        env:
+          ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
+          INPUT_DATE: ${{ github.event.inputs.date }}
+        run: dotnet run --project .github/scripts/BingPaperListUpdater --configuration Release
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Assets/list.xml
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore(wallpaper): auto-update list $(date -u +%Y-%m-%d)"
+            git push
+          fi
