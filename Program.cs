@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Windows.ApplicationModel.DynamicDependency;
 using WinRT;
@@ -11,6 +12,9 @@ namespace BingPaper
 {
     class Program
     {
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
+
         [STAThread]
         static void Main(string[] args)
         {
@@ -24,6 +28,14 @@ namespace BingPaper
 
                 Bootstrap.TryInitialize(0x00020000, out int hresult);
                 WriteLog(logPath, $"Bootstrap.TryInitialize returned: hresult=0x{hresult:X8}");
+
+                if (hresult != 0)
+                {
+                    var msg = $"Windows App SDK 初始化失败 (hresult=0x{hresult:X8})。\n请确保已安装 Windows App SDK 运行时。";
+                    WriteLog(logPath, msg);
+                    MessageBox(IntPtr.Zero, msg, "BingPaper 启动错误", 0x10);
+                    return;
+                }
 
                 ComWrappersSupport.InitializeComWrappers();
                 WriteLog(logPath, "WinRT.ComWrappersSupport.InitializeComWrappers() called");
@@ -43,6 +55,7 @@ namespace BingPaper
                     catch (Exception ex)
                     {
                         WriteLog(logPath, $"App creation error: {ex}");
+                        MessageBox(IntPtr.Zero, $"应用初始化失败:\n{ex.Message}", "BingPaper 错误", 0x10);
                         throw;
                     }
                 });
@@ -51,7 +64,7 @@ namespace BingPaper
             {
                 WriteLog(logPath, $"Fatal error: {ex}");
                 WriteLog(logPath, $"Stack trace: {ex.StackTrace}");
-                Console.WriteLine($"Fatal error: {ex}");
+                MessageBox(IntPtr.Zero, $"致命错误:\n{ex}", "BingPaper 错误", 0x10);
                 Environment.Exit(1);
             }
         }

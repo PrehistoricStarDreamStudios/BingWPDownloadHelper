@@ -49,10 +49,23 @@ namespace BingPaper
         /// <param name="args">Details about the launch request.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            // 非打包模式下，在 OnLaunched 中创建并激活主窗口
-            var window = new MainWindow();
-            window.Activate();
+            try
+            {
+                var window = new MainWindow();
+                window.Activate();
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Environment.ProcessPath ?? "") ?? "", "error.log"),
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - [OnLaunched] {ex}{Environment.NewLine}");
+                MessageBox(IntPtr.Zero, $"窗口创建失败:\n{ex}", "BingPaper 错误", 0x10);
+                throw;
+            }
         }
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
