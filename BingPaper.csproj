@@ -10,6 +10,7 @@
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>true</WinUISDKReferences>
     <EnableMsixTooling>false</EnableMsixTooling>
+    <WindowsPackageType>None</WindowsPackageType>
     <Nullable>enable</Nullable>
     <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
