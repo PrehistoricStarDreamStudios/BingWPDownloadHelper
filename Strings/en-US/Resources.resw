@@ -51,7 +51,6 @@
   <data name="BrowseBtn2.ToolTipService.ToolTip" xml:space="preserve"><value>Browse folder</value></data>
   <data name="AspectRatioLabel.Text" xml:space="preserve"><value>Aspect:</value></data>
   <data name="ResolutionLabel.Text" xml:space="preserve"><value> Resolution:</value></data>
-  <data name="DownloadHistoryChk.Content" xml:space="preserve"><value>Download history</value></data>
   <data name="StartDateLabel.Text" xml:space="preserve"><value> Start date:</value></data>
   <data name="StartDownloadBtn.Content" xml:space="preserve"><value>Start Download</value></data>
 
@@ -66,7 +65,6 @@
   <data name="Interval1h.Content" xml:space="preserve"><value>1 hour</value></data>
   <data name="Interval6h.Content" xml:space="preserve"><value>6 hours</value></data>
   <data name="Interval1d.Content" xml:space="preserve"><value>1 day</value></data>
-  <data name="ShuffleChk.Content" xml:space="preserve"><value>Shuffle</value></data>
   <data name="FillModeLabel.Text" xml:space="preserve"><value>Fill mode:</value></data>
   <data name="FillFill.Content" xml:space="preserve"><value>Fill</value></data>
   <data name="FillFit.Content" xml:space="preserve"><value>Fit</value></data>
@@ -77,7 +75,6 @@
   <data name="ApplySettingsBtn.Content" xml:space="preserve"><value>Apply</value></data>
 
   <data name="AppSettingsPageTitle.Text" xml:space="preserve"><value>Settings</value></data>
-  <data name="AutoStartChk.Content" xml:space="preserve"><value>Start with Windows</value></data>
   <data name="CloseBehaviorLabel.Text" xml:space="preserve"><value>On close:</value></data>
   <data name="CloseTray.Content" xml:space="preserve"><value>Minimize to tray</value></data>
   <data name="CloseExit.Content" xml:space="preserve"><value>Exit</value></data>
@@ -100,7 +97,6 @@
   <data name="LangZhTW.Content" xml:space="preserve"><value>繁體中文（中國台灣）</value></data>
   <data name="LangEnUS.Content" xml:space="preserve"><value>English (United States)</value></data>
   <data name="LangEnGB.Content" xml:space="preserve"><value>English (United Kingdom)</value></data>
-  <data name="AutoUpdateListChk.Content" xml:space="preserve"><value>Auto-update list (daily from GitHub)</value></data>
   <data name="CheckUpdateNowBtn.Content" xml:space="preserve"><value>Check now</value></data>
   <data name="DefaultListLabel.Text" xml:space="preserve"><value>Default list:</value></data>
   <data name="ListLocal.Content" xml:space="preserve"><value>Local</value></data>
