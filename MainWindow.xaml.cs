@@ -2087,6 +2087,23 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
             catch { }
         }
 
+        /// <summary>颜色主题下拉框选择变更：立即应用并写入 _config。</summary>
+        private void ColorTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (_isLoadingSettings) return;
+                var combo = sender as ComboBox;
+                if (combo?.SelectedItem is ComboBoxItem item)
+                {
+                    var ct = item.Tag as string ?? "System";
+                    _config["color_theme"] = ct;
+                    ApplyColorTheme(ct);
+                }
+            }
+            catch { }
+        }
+
         /// <summary>透明背景开关切换：立即应用并写入 _config。</summary>
         private void TransparentBackground_Toggled(object sender, RoutedEventArgs e)
         {
