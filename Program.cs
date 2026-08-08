@@ -26,7 +26,7 @@ namespace BingPaper
             {
                 WriteLog(logPath, "Starting BingPaper...");
 
-                Bootstrap.TryInitialize(0x00020000, out int hresult);
+                Bootstrap.TryInitialize(0x00020301, out int hresult);
                 WriteLog(logPath, $"Bootstrap.TryInitialize returned: hresult=0x{hresult:X8}");
 
                 if (hresult != 0)
