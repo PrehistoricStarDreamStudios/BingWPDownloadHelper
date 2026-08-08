@@ -39,16 +39,19 @@ namespace BingPaper
                     NoLeftClickDelay = true,
                     // 左键单击时执行 ShowRequested；右键单击时由 ContextFlyout 自动弹出菜单
                     MenuActivation = PopupActivationMode.RightClick,
-                    // 使用第二窗口渲染 WinUI3 风格菜单（Fluent Design）
-                    ContextMenuMode = H.NotifyIcon.ContextMenuMode.SecondWindow,
+                    // 使用 Win32 弹出菜单（PopupMenu 比 SecondWindow 更可靠，菜单事件能正确触发）
+                    ContextMenuMode = H.NotifyIcon.ContextMenuMode.PopupMenu,
                 };
 
-                // 设置图标：使用 BitmapImage 加载应用图标
-                // （BitmapImage 继承自 ImageSource，与 IconSource 属性类型兼容；
-                //  避免 GeneratedIconSource 的 Segoe MDL2 字体回退到中文字体导致"棍母"乱码）
+                // 设置图标：使用文件路径加载 appicon.png
+                // （ms-appx:/// 在 unpackaged 模式下无法解析，改用 file:/// 绝对路径）
                 try
                 {
-                    _trayIcon.IconSource = new BitmapImage(new Uri("ms-appx:///Assets/appicon.png"));
+                    var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "appicon.png");
+                    if (System.IO.File.Exists(iconPath))
+                    {
+                        _trayIcon.IconSource = new BitmapImage(new Uri("file:///" + iconPath.Replace("\\", "/")));
+                    }
                 }
                 catch { }
 

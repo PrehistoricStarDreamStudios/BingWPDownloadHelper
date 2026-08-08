@@ -20,6 +20,17 @@
     <DefineConstants>DISABLE_XAML_GENERATED_MAIN;DISABLE_WINDOWS_APP_SDK_AUTO_INITIALIZATION</DefineConstants>
     
     </PropertyGroup>
+
+  <!-- .resx 资源文件（必须显式声明为 EmbeddedResource，否则 SDK 在 WinUI 项目中默认不编译） -->
+  <ItemGroup>
+    <EmbeddedResource Include="Strings\Strings.resx" />
+    <EmbeddedResource Include="Strings\Strings.zh-CN.resx" />
+    <EmbeddedResource Include="Strings\Strings.zh-HK.resx" />
+    <EmbeddedResource Include="Strings\Strings.zh-TW.resx" />
+    <EmbeddedResource Include="Strings\Strings.en-US.resx" />
+    <EmbeddedResource Include="Strings\Strings.en-GB.resx" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Remove="Assets\list.xml" />
 

@@ -479,7 +479,15 @@ namespace BingPaper
                 };
                 _trayManager.ExitRequested += (s, e) =>
                 {
-                    try { _isExiting = true; this.Close(); } catch { }
+                    try
+                    {
+                        _isExiting = true;
+                        _trayManager?.Dispose();
+                        this.Close();
+                        // 确保应用进程完全退出（WinUI3 窗口关闭后 DispatcherQueue 可能不自动停止）
+                        Microsoft.UI.Xaml.Application.Current.Exit();
+                    }
+                    catch { }
                 };
 
                 // 拦截窗口关闭事件：未标记退出时最小化到托盘
@@ -500,6 +508,11 @@ namespace BingPaper
                             // 真正退出时保存窗口大小位置
                             try { SaveConfig(); } catch { }
                         }
+                    };
+                    // 窗口关闭后（无论是否退出）释放托盘资源
+                    this.Closed += (s, e) =>
+                    {
+                        try { _trayManager?.Dispose(); } catch { }
                     };
                 }
                 catch { }
@@ -2159,7 +2172,9 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                 if (string.Equals(behavior, "Exit", StringComparison.OrdinalIgnoreCase))
                 {
                     _isExiting = true;
+                    _trayManager?.Dispose();
                     try { this.Close(); } catch { }
+                    Microsoft.UI.Xaml.Application.Current.Exit();
                 }
                 else
                 {
@@ -2926,7 +2941,7 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                     _trayManager?.Dispose();
                     _trayManager = new TrayManager(this);
                     _trayManager.ShowRequested += (s, e) => { try { _trayManager?.ShowFromTray(); } catch { } };
-                    _trayManager.ExitRequested += (s, e) => { try { _isExiting = true; this.Close(); } catch { } };
+                    _trayManager.ExitRequested += (s, e) => { try { _isExiting = true; _trayManager?.Dispose(); this.Close(); Microsoft.UI.Xaml.Application.Current.Exit(); } catch { } };
                 }
                 catch { }
             }
