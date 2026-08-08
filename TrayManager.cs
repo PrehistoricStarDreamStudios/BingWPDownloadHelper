@@ -43,15 +43,12 @@ namespace BingPaper
                     ContextMenuMode = H.NotifyIcon.ContextMenuMode.SecondWindow,
                 };
 
-                // 设置图标：使用 BitmapIconSource 加载应用图标
-                // （避免 GeneratedIconSource 的 Segoe MDL2 字体回退到中文字体导致"棍母"乱码）
+                // 设置图标：使用 BitmapImage 加载应用图标
+                // （BitmapImage 继承自 ImageSource，与 IconSource 属性类型兼容；
+                //  避免 GeneratedIconSource 的 Segoe MDL2 字体回退到中文字体导致"棍母"乱码）
                 try
                 {
-                    _trayIcon.IconSource = new BitmapIconSource
-                    {
-                        UriSource = new Uri("ms-appx:///Assets/appicon.png"),
-                        ShowAsMonochrome = false,
-                    };
+                    _trayIcon.IconSource = new BitmapImage(new Uri("ms-appx:///Assets/appicon.png"));
                 }
                 catch { }
 
