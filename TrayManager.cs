@@ -1,24 +1,26 @@
 using System;
 using System.Runtime.InteropServices;
-using H.NotifyIcon;
 using H.NotifyIcon.Core;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace BingPaper
 {
     /// <summary>
     /// 管理系统托盘图标、右键菜单与窗口显示/隐藏行为。
-    /// 基于 H.NotifyIcon.WinUI。
+    /// 基于 H.NotifyIcon.Core.TrayIcon 直接操作 Win32 托盘图标，
+    /// 避免 BitmapImage 异步加载导致图标空白的问题。
     /// </summary>
     public sealed class TrayManager : IDisposable
     {
         private readonly Window _window;
-        private TaskbarIcon? _trayIcon;
-        private MenuFlyout? _menu;
+        private IntPtr _windowHandle = IntPtr.Zero;
+        private TrayIcon? _trayIcon;
+        private IntPtr _hMenu = IntPtr.Zero;
         private bool _disposed;
+
+        // 菜单项命令 ID
+        private const int CMD_SHOW = 1;
+        private const int CMD_EXIT = 2;
 
         public event EventHandler? ShowRequested;
         public event EventHandler? ExitRequested;
@@ -33,80 +35,118 @@ namespace BingPaper
         {
             try
             {
-                _trayIcon = new TaskbarIcon
-                {
-                    ToolTipText = Strings.GetString("TrayTooltip") ?? "Bing Wallpaper",
-                    NoLeftClickDelay = true,
-                    // 左键单击时执行 ShowRequested；右键单击时由 ContextFlyout 自动弹出菜单
-                    MenuActivation = PopupActivationMode.RightClick,
-                    // 使用 Win32 弹出菜单（PopupMenu 比 SecondWindow 更可靠，菜单事件能正确触发）
-                    ContextMenuMode = H.NotifyIcon.ContextMenuMode.PopupMenu,
-                };
-
-                // 设置图标：使用文件路径加载 appicon.png
-                // （ms-appx:/// 在 unpackaged 模式下无法解析，改用 file:/// 绝对路径）
+                // 获取主窗口句柄
                 try
                 {
-                    var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "appicon.png");
-                    if (System.IO.File.Exists(iconPath))
-                    {
-                        _trayIcon.IconSource = new BitmapImage(new Uri("file:///" + iconPath.Replace("\\", "/")));
-                    }
+                    _windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(_window);
                 }
                 catch { }
 
-                // 构建右键菜单（使用 ContextFlyout，WinUI3 标准属性）
-                _menu = new MenuFlyout();
-                var showItem = new MenuFlyoutItem { Text = Strings.GetString("TrayShow") };
-                showItem.Click += (s, e) => ShowRequested?.Invoke(this, EventArgs.Empty);
-                _menu.Items.Add(showItem);
-
-                var sep = new MenuFlyoutSeparator();
-                _menu.Items.Add(sep);
-
-                var exitItem = new MenuFlyoutItem { Text = Strings.GetString("TrayExit") };
-                exitItem.Click += (s, e) => ExitRequested?.Invoke(this, EventArgs.Empty);
-                _menu.Items.Add(exitItem);
-
-                _trayIcon.ContextFlyout = _menu;
-
-                // 左键单击显示窗口
-                _trayIcon.LeftClickCommand = new RelayCommand(() =>
+                // 1. 加载 .ico 文件为 HICON
+                var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "appicon.ico");
+                if (!System.IO.File.Exists(iconPath))
+                    iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "appicon.ico");
+                var hIcon = IntPtr.Zero;
+                if (System.IO.File.Exists(iconPath))
                 {
-                    ShowRequested?.Invoke(this, EventArgs.Empty);
+                    hIcon = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
+                }
+
+                // 2. 创建 TrayIcon
+                _trayIcon = new TrayIcon(new IconData
+                {
+                    hIcon = hIcon,
+                    hCallback = IntPtr.Zero,
+                    uCallbackMessage = 0,
+                    uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE,
+                    szTip = Strings.GetString("TrayTooltip") ?? "Bing Wallpaper",
+                    dwState = 0,
+                    dwStateMask = 0,
+                    uVersion = 0,
                 });
 
-                _trayIcon.ForceCreate();
+                _trayIcon.LeftClick += OnLeftClick;
+                _trayIcon.RightClick += OnRightClick;
+
+                _trayIcon.Create();
             }
             catch { }
         }
 
-        /// <summary>
-        /// 显示托盘图标（如果之前隐藏）。
-        /// </summary>
-        public void Show()
+        private void OnLeftClick(object? sender, EventArgs e)
         {
-            try { _trayIcon?.ForceCreate(); } catch { }
+            try
+            {
+                ShowRequested?.Invoke(this, EventArgs.Empty);
+            }
+            catch { }
         }
 
-        /// <summary>
-        /// 隐藏窗口到托盘（不退出）。
-        /// </summary>
+        private void OnRightClick(object? sender, EventArgs e)
+        {
+            try
+            {
+                ShowContextMenu();
+            }
+            catch { }
+        }
+
+        private void ShowContextMenu()
+        {
+            try
+            {
+                if (_hMenu != IntPtr.Zero)
+                {
+                    DestroyMenu(_hMenu);
+                    _hMenu = IntPtr.Zero;
+                }
+
+                _hMenu = CreatePopupMenu();
+
+                var showText = Strings.GetString("TrayShow");
+                AppendMenu(_hMenu, MF_STRING, CMD_SHOW, showText);
+                AppendMenu(_hMenu, MF_SEPARATOR, 0, null);
+                var exitText = Strings.GetString("TrayExit");
+                AppendMenu(_hMenu, MF_STRING, CMD_EXIT, exitText);
+
+                // 获取当前鼠标位置
+                GetCursorPos(out POINT pt);
+
+                // 设置菜单为前景（支持键盘导航）
+                if (_windowHandle != IntPtr.Zero)
+                    SetForegroundWindow(_windowHandle);
+
+                // 显示弹出菜单
+                var cmd = TrackPopupMenu(_hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_BOTTOMALIGN, pt.X, pt.Y, 0, _windowHandle != IntPtr.Zero ? _windowHandle : GetShellWindow(), IntPtr.Zero);
+
+                if (cmd == CMD_SHOW)
+                {
+                    ShowRequested?.Invoke(this, EventArgs.Empty);
+                }
+                else if (cmd == CMD_EXIT)
+                {
+                    ExitRequested?.Invoke(this, EventArgs.Empty);
+                }
+            }
+            catch { }
+        }
+
+        public void Show()
+        {
+            try { _trayIcon?.Create(); } catch { }
+        }
+
         public void HideToTray()
         {
             try { _window.Hide(); } catch { }
         }
 
-        /// <summary>
-        /// 显示窗口（从托盘恢复）。
-        /// </summary>
         public void ShowFromTray()
         {
             try
             {
                 _window.Show();
                 _window.Activate();
-                // 把窗口带到前台
                 try
                 {
                     var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(_window);
@@ -122,27 +162,77 @@ namespace BingPaper
         {
             if (_disposed) return;
             _disposed = true;
-            try { _trayIcon?.Dispose(); } catch { }
+            try
+            {
+                if (_trayIcon != null)
+                {
+                    _trayIcon.LeftClick -= OnLeftClick;
+                    _trayIcon.RightClick -= OnRightClick;
+                    _trayIcon.Dispose();
+                    _trayIcon = null;
+                }
+            }
+            catch { }
+            try
+            {
+                if (_hMenu != IntPtr.Zero)
+                {
+                    DestroyMenu(_hMenu);
+                    _hMenu = IntPtr.Zero;
+                }
+            }
+            catch { }
         }
 
-        #region Win32 helpers
+        #region Win32 P/Invoke
+
+        private const int IMAGE_ICON = 1;
+        private const uint LR_LOADFROMFILE = 0x00000010;
+        private const uint LR_DEFAULTSIZE = 0x00000040;
+        private const uint NIF_ICON = 0x00000002;
+        private const uint NIF_TIP = 0x00000004;
+        private const uint NIF_MESSAGE = 0x00000001;
+        private const uint MF_STRING = 0x00000000;
+        private const uint MF_SEPARATOR = 0x00000800;
+        private const uint TPM_RETURNCMD = 0x00000100;
+        private const uint TPM_LEFTALIGN = 0x00000000;
+        private const uint TPM_BOTTOMALIGN = 0x00002000;
         private const int SW_RESTORE = 9;
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern IntPtr LoadImage(IntPtr hInst, string name, int type, int cx, int cy, uint flags);
+
         [DllImport("user32.dll")]
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
-        #endregion
-    }
 
-    /// <summary>
-    /// 简单的 ICommand 实现，供托盘左键命令使用。
-    /// </summary>
-    public sealed class RelayCommand : System.Windows.Input.ICommand
-    {
-        private readonly Action _action;
-        public RelayCommand(Action action) { _action = action; }
-        public bool CanExecute(object? parameter) => true;
-        public void Execute(object? parameter) => _action();
-        public event EventHandler? CanExecuteChanged { add { } remove { } }
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetShellWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr CreatePopupMenu();
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool AppendMenu(IntPtr hMenu, uint flags, int id, string? text);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool DestroyMenu(IntPtr hMenu);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool GetCursorPos(out POINT pt);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern int TrackPopupMenu(IntPtr hMenu, uint flags, int x, int y, int nReserved, IntPtr hWnd, IntPtr prcRect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        #endregion
     }
 }
