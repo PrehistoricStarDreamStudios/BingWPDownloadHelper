@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using H.NotifyIcon;
 using H.NotifyIcon.Core;
@@ -44,16 +43,14 @@ namespace BingPaper
                     ContextMenuMode = H.NotifyIcon.ContextMenuMode.SecondWindow,
                 };
 
-                // 设置图标：使用 GeneratedIconSource 生成简洁图标
-                // （避免 unpackaged 模式下 BitmapImage + .ico 的异步崩溃问题）
+                // 设置图标：使用 BitmapIconSource 加载应用图标
+                // （避免 GeneratedIconSource 的 Segoe MDL2 字体回退到中文字体导致"棍母"乱码）
                 try
                 {
-                    _trayIcon.IconSource = new Microsoft.UI.Xaml.Media.Imaging.GeneratedIconSource
+                    _trayIcon.IconSource = new BitmapIconSource
                     {
-                        Glyph = "\uE896", // 下载图标
-                        Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Colors.White),
-                        Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                            Windows.UI.Color.FromArgb(255, 0, 120, 212)), // 蓝色背景
+                        UriSource = new Uri("ms-appx:///Assets/appicon.png"),
+                        ShowAsMonochrome = false,
                     };
                 }
                 catch { }
