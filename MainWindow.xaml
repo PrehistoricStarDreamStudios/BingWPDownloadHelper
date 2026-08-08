@@ -387,7 +387,7 @@
                                 <!-- 关于作者 -->
                                 <Expander x:Uid="AboutAuthorExpander" HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                        <Button x:Uid="AboutBiliBtn" Click="OpenBili_Click" Margin="4" />
+                                        <Button x:Uid="AboutAuthorBiliBtn" Click="OpenBili_Click" Margin="4" />
                                         <Button x:Uid="AboutMailBtn" Click="OpenMail_Click" Margin="4" />
                                         <Button Content="GitHub" Click="OpenAuthorGit_Click" Margin="4" />
                                         <Button Content="X" Click="OpenAuthorX_Click" Margin="4" />
@@ -397,7 +397,7 @@
                                 <!-- 关于本项目 -->
                                 <Expander x:Uid="AboutProjectExpander" HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                        <Button x:Uid="AboutProjectGitBtn" Click="OpenProjectGit_Click" Margin="4" />
+                                        <Button x:Uid="AboutProjectGitBtn2" Click="OpenProjectGit_Click" Margin="4" />
                                     </StackPanel>
                                 </Expander>
 

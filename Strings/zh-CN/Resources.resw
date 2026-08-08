@@ -107,6 +107,8 @@
   <data name="AboutPageTitle.Text" xml:space="preserve"><value>关于</value></data>
   <data name="AboutAuthorExpander.Header" xml:space="preserve"><value>关于作者</value></data>
   <data name="AboutBiliBtn.Content" xml:space="preserve"><value>B站</value></data>
+  <data name="AboutAuthorBiliBtn.Content" xml:space="preserve"><value>B站</value></data>
+  <data name="AboutProjectGitBtn2.Content" xml:space="preserve"><value>项目GitHub</value></data>
   <data name="AboutMailBtn.Content" xml:space="preserve"><value>邮箱</value></data>
   <data name="AboutProjectExpander.Header" xml:space="preserve"><value>关于本项目</value></data>
   <data name="AboutProjectGitBtn.Content" xml:space="preserve"><value>项目GitHub</value></data>
