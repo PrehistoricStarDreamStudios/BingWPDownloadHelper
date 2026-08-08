@@ -19,19 +19,18 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 标题栏 48px：Windows 11 设置风格，自定义内容 + 系统标题栏按钮 -->
+        <!-- 标题栏 48px：Fluent 风格自定义标题栏 + 自定义窗口控件按钮 -->
         <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent" Height="48">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="LeftPaddingColumn" Width="0" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition x:Name="RightPaddingColumn" Width="0" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <Button x:Name="CollapseNavButtonLeft"
                     Click="CollapseNavButton_Click"
-                    Grid.Column="1"
+                    Grid.Column="0"
                     Width="48" Height="48"
                     Background="Transparent"
                     BorderThickness="0"
@@ -41,7 +40,7 @@
                 <FontIcon Glyph="&#xE700;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
             </Button>
 
-            <Grid x:Name="DragRegion" Grid.Column="2" Margin="12,0,0,0">
+            <Grid x:Name="DragRegion" Grid.Column="1" Margin="12,0,0,0">
                 <TextBlock x:Uid="AppTitleText"
                            VerticalAlignment="Center"
                            Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
@@ -51,7 +50,7 @@
 
             <Button x:Name="ToggleThemeButton"
                     Click="ToggleThemeButton_Click"
-                    Grid.Column="3"
+                    Grid.Column="2"
                     Width="48" Height="48"
                     Background="Transparent"
                     BorderThickness="0"
@@ -60,6 +59,40 @@
                     x:Uid="ToggleThemeBtn">
                 <FontIcon x:Name="ToggleIcon" Glyph="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
             </Button>
+
+            <!-- 自定义 Fluent 风格窗口控件（最小化 / 最大化还原 / 关闭） -->
+            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Stretch">
+                <Button x:Name="MinButton"
+                        Click="MinButton_Click"
+                        Width="46" Height="32"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource CaptionButtonStyle}">
+                    <FontIcon Glyph="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10" />
+                </Button>
+                <Button x:Name="MaxButton"
+                        Click="MaxButton_Click"
+                        Width="46" Height="32"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource CaptionButtonStyle}">
+                    <FontIcon x:Name="MaxIcon" Glyph="&#xE922;" FontFamily="Segoe MDL2 Assets" FontSize="10" />
+                </Button>
+                <Button x:Name="CloseButton"
+                        Click="CloseButton_Click"
+                        Width="46" Height="32"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource CloseButtonStyle}">
+                    <FontIcon Glyph="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10" />
+                </Button>
+            </StackPanel>
         </Grid>
 
         <!-- NavigationView 主容器 -->
@@ -270,6 +303,8 @@
                                 <ComboBox x:Name="BackdropTypeCombo" Width="160" Margin="8,0" SelectedIndex="0" SelectionChanged="BackdropType_SelectionChanged">
                                     <ComboBoxItem x:Uid="BackdropMica" Tag="Mica" />
                                     <ComboBoxItem x:Uid="BackdropAcrylic" Tag="Acrylic" />
+                                    <ComboBoxItem Content="Aero（Win7 玻璃）" Tag="Aero" />
+                                    <ComboBoxItem Content="LiquidGlass（iOS/MacOS）" Tag="LiquidGlass" />
                                     <ComboBoxItem x:Uid="BackdropNone" Tag="None" />
                                 </ComboBox>
                                 <ToggleSwitch x:Name="TransparentBackgroundSwitch" x:Uid="TransparentBackgroundChk" Margin="16,0,0,0" Toggled="TransparentBackground_Toggled" />

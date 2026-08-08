@@ -40,8 +40,8 @@ namespace BingPaper
         public string FriendlyLinksUrl { get; set; } = "https://www.bing.com/?mkt=zh-CN";
         public bool DailyMottoEnabled { get; set; } = true;
 
-        // 窗口背景材质（Fluent Design）：Mica 云母 / Acrylic 亚克力 / None 无
-        public string BackdropType { get; set; } = "Mica";        // Mica / Acrylic / None
+        // 窗口背景材质（Fluent Design）：Mica 云母 / Acrylic 亚克力 / Aero Win7 玻璃 / LiquidGlass iOS磨砂 / None 无
+        public string BackdropType { get; set; } = "Mica";        // Mica / Acrylic / Aero / LiquidGlass / None
         public bool MicaEnabled { get; set; } = true;             // 是否启用系统背景材质（false=纯色不透明）
         public bool TransparentBackground { get; set; } = true;   // 根 Grid 是否透明（让背景材质透出）
 

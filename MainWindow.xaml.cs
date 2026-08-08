@@ -116,7 +116,7 @@ namespace BingPaper
             this.ExtendsContentIntoTitleBar = true;
             // 背景材质在加载 _config 后由 ApplyBackdrop 统一应用（支持 Mica/Acrylic/None + 透明背景开关）
 
-            // 配置 OverlappedPresenter：原生 WinUI3 窗口样式（圆角、系统标题栏按钮）
+            // 配置 OverlappedPresenter：原生 WinUI3 窗口样式（圆角、自定义标题栏按钮）
             try
             {
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -129,8 +129,6 @@ namespace BingPaper
                     presenter.IsResizable = true;
                     presenter.IsAlwaysOnTop = false;
                 }
-                // 关键：AppWindow.TitleBar.ExtendsContentIntoTitleBar=true 让系统绘制 Fluent 风格标题按钮
-                try { appWindow.TitleBar.ExtendsContentIntoTitleBar = true; } catch { }
                 // Windows 11 圆角：DWM 设置窗口圆角属性
                 try
                 {
@@ -138,13 +136,22 @@ namespace BingPaper
                     DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref cornerPreference, sizeof(int));
                 }
                 catch { }
+
+                // 隐藏系统标题栏按钮（Win32 样式），使用自定义 Fluent 风格按钮
+                try
+                {
+                    var style = (uint)(long)GetWindowLongPtr64(hwnd, GWL_STYLE);
+                    style = style & ~(uint)WS_SYSMENU & ~(uint)WS_MINIMIZEBOX & ~(uint)WS_MAXIMIZEBOX;
+                    SetWindowLongPtr64(hwnd, GWL_STYLE, (IntPtr)(long)style);
+                }
+                catch { }
             }
             catch { }
 
-            // 立即设置标题栏：用整个 AppTitleBar 作为标题栏区域，系统会自动在右侧放置 Fluent 风格按钮
+            // 立即设置标题栏：用 DragRegion 作为拖拽区域，自定义按钮在 AppTitleBar 内
             try
             {
-                this.SetTitleBar(this.AppTitleBar);
+                this.SetTitleBar(this.DragRegion);
                 UpdateTitleBarColors();
             }
             catch { }
@@ -276,12 +283,21 @@ namespace BingPaper
                     }
                     catch { }
 
-                    // when window size changes, recompute desired open pane length
+                    // when window size changes, recompute desired open pane length and update caption button icon
                     this.SizeChanged += (_, __) =>
                     {
                         try
                         {
                             UpdateNavLayout(nav);
+                            // 更新最大化/还原按钮图标
+                            try
+                            {
+                                var hwnd2 = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                                var isMax = IsWindowMaximized(hwnd2);
+                                if (this.Content is FrameworkElement fe && fe.FindName("MaxIcon") is FontIcon mi)
+                                    mi.Glyph = isMax ? "\uE923" : "\uE922";
+                            }
+                            catch { }
                         }
                         catch { };
                     };
@@ -1681,6 +1697,56 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
         private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
         private const int DWMWCP_ROUND = 2;
 
+        // DWM 扩展帧到客户区（Aero Glass 效果）
+        [DllImport("dwmapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref MARGINS pMarInset);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MARGINS
+        {
+            public int cxLeftWidth;
+            public int cxRightWidth;
+            public int cyTopHeight;
+            public int cyBottomHeight;
+        }
+
+        // SetWindowCompositionAttribute（Aero Blur / Acrylic 效果）
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
+
+        private enum AccentState
+        {
+            ACCENT_DISABLED = 0,
+            ACCENT_ENABLE_GRADIENT = 1,
+            ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
+            ACCENT_ENABLE_BLURBEHIND = 3,
+            ACCENT_ENABLE_ACRYLICBLURBEHIND = 4,
+            ACCENT_ENABLE_HOSTBACKDROP = 5,
+            ACCENT_INVALID_STATE = 6
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct AccentPolicy
+        {
+            public AccentState AccentState;
+            public uint AccentFlags;
+            public uint GradientColor;
+            public uint AnimationId;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct WindowCompositionAttributeData
+        {
+            public WindowCompositionAttribute Attribute;
+            public IntPtr Data;
+            public int SizeOfData;
+        }
+
+        private enum WindowCompositionAttribute
+        {
+            WCA_ACCENT_POLICY = 19
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
@@ -1769,7 +1835,6 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                 var appWindow = AppWindow.GetFromWindowId(windowId);
                 if (appWindow != null)
                 {
-                    var root = this.Content as FrameworkElement;
                     var titleBar = appWindow.TitleBar;
 
                     // 全部设为 null：让系统使用 Fluent 默认样式（透明背景 + 系统主题色 glyph）
@@ -1785,27 +1850,6 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                     try { titleBar.BackgroundColor = null; } catch { }
                     try { titleBar.InactiveForegroundColor = null; } catch { }
                     try { titleBar.InactiveBackgroundColor = null; } catch { }
-
-                    // 设置标题栏左右内边距列，为系统标题按钮（最小化/最大化/关闭）预留空间
-                    try
-                    {
-                        var leftInset = titleBar.LeftInset;
-                        var rightInset = titleBar.RightInset;
-                        System.Diagnostics.Debug.WriteLine($"TitleBar insets: Left={leftInset} Right={rightInset}");
-                        try { System.IO.File.AppendAllText(System.IO.Path.Combine(AppContext.BaseDirectory, "error.log"),
-                            $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - [Debug] TitleBar insets: Left={leftInset} Right={rightInset}{Environment.NewLine}"); } catch { }
-                        var leftCol = root?.FindName("LeftPaddingColumn") as ColumnDefinition;
-                        var rightCol = root?.FindName("RightPaddingColumn") as ColumnDefinition;
-                        if (leftCol != null && leftInset > 0)
-                            leftCol.Width = new GridLength(leftInset);
-                        // RightInset 可能在窗口首次渲染时为 0，使用 138 作为回退值（3 个按钮 × 46px）
-                        if (rightCol != null)
-                        {
-                            int rightWidth = rightInset > 0 ? rightInset : 138;
-                            rightCol.Width = new GridLength(rightWidth);
-                        }
-                    }
-                    catch { }
                 }
             }
             catch { }
@@ -1842,6 +1886,11 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                 root.RequestedTheme = theme;
                 UpdateThemeRecursive(root, theme);
                 try { UpdateTitleBarColors(); } catch { }
+                // 重新应用背景材质（LiquidGlass/Aero 需要根据主题更新着色）
+                var backdropType = _config.TryGetValue("backdrop_type", out var btv) ? btv : "Mica";
+                var transparent = _config.TryGetValue("transparent_background", out var tgv)
+                    ? tgv.Equals("true", StringComparison.OrdinalIgnoreCase) : true;
+                ApplyBackdrop(backdropType, transparent);
             }
             catch { }
         }
@@ -1891,24 +1940,110 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
         }
 
         /// <summary>
-        /// 应用窗口背景材质（Fluent Design）：Mica 云母 / Acrylic 亚克力 / None 不透明。
+        /// 应用窗口背景材质：
+        /// Mica（云母）/ Acrylic（亚克力）/ Aero（Win7 玻璃）/ LiquidGlass（iOS/MacOS 磨砂玻璃）/ None（纯色）
         /// 同时根据 TransparentBackground 配置决定根 Grid 是否透明（让背景材质透出）。
         /// </summary>
         private void ApplyBackdrop(string backdropType, bool transparentBackground)
         {
             try
             {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+
                 // 1. 设置系统背景材质
                 Microsoft.UI.Xaml.Media.SystemBackdrop? backdrop = null;
+
                 if (string.Equals(backdropType, "Mica", StringComparison.OrdinalIgnoreCase))
                 {
+                    // Mica：使用 MicaBackdrop（Win11 云母效果）+ DWM 扩展帧增强透色
                     backdrop = new MicaBackdrop();
+                    // 扩展帧到客户区以增强 Mica 的透色效果
+                    try
+                    {
+                        var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
+                        DwmExtendFrameIntoClientArea(hwnd, ref margins);
+                    }
+                    catch { }
                 }
                 else if (string.Equals(backdropType, "Acrylic", StringComparison.OrdinalIgnoreCase))
                 {
                     backdrop = new DesktopAcrylicBackdrop();
                 }
+                else if (string.Equals(backdropType, "Aero", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Aero Windows 7 玻璃效果：使用 BlurBehind + DWM 扩展帧
+                    try
+                    {
+                        var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
+                        DwmExtendFrameIntoClientArea(hwnd, ref margins);
+                    }
+                    catch { }
+                    // 启用经典 BlurBehind 效果
+                    try
+                    {
+                        var accent = new AccentPolicy
+                        {
+                            AccentState = AccentState.ACCENT_ENABLE_BLURBEHIND,
+                            AccentFlags = 0,
+                            GradientColor = 0,
+                            AnimationId = 0
+                        };
+                        var accentStruct = accent;
+                        var data = new WindowCompositionAttributeData
+                        {
+                            Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
+                            Data = Marshal.AllocHGlobal(Marshal.SizeOf(accentStruct)),
+                            SizeOfData = Marshal.SizeOf(accentStruct)
+                        };
+                        try
+                        {
+                            Marshal.StructureToPtr(accentStruct, data.Data, false);
+                            SetWindowCompositionAttribute(hwnd, ref data);
+                        }
+                        finally { Marshal.FreeHGlobal(data.Data); }
+                    }
+                    catch { }
+                }
+                else if (string.Equals(backdropType, "LiquidGlass", StringComparison.OrdinalIgnoreCase))
+                {
+                    // LiquidGlass（iOS/MacOS 磨砂玻璃）：使用 AcrylicBlurBehind + 浅色/深色透明着色
+                    try
+                    {
+                        var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
+                        DwmExtendFrameIntoClientArea(hwnd, ref margins);
+                    }
+                    catch { }
+                    // 使用 AcrylicBlurBehind 效果 + 浅色着色（iOS 磨砂玻璃风格）
+                    try
+                    {
+                        var isDark = (this.Content as FrameworkElement)?.ActualTheme == ElementTheme.Dark;
+                        // GradientColor: 0xAABBGGRR - 浅色半透明青白（iOS 风格）或深色暗色
+                        uint gradientColor = isDark ? 0x66101010u : 0x66F0F8FFu;
+                        var accent = new AccentPolicy
+                        {
+                            AccentState = AccentState.ACCENT_ENABLE_ACRYLICBLURBEHIND,
+                            AccentFlags = 0x20, // 启用 Acrylic 标志
+                            GradientColor = gradientColor,
+                            AnimationId = 0
+                        };
+                        var accentStruct = accent;
+                        var data = new WindowCompositionAttributeData
+                        {
+                            Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
+                            Data = Marshal.AllocHGlobal(Marshal.SizeOf(accentStruct)),
+                            SizeOfData = Marshal.SizeOf(accentStruct)
+                        };
+                        try
+                        {
+                            Marshal.StructureToPtr(accentStruct, data.Data, false);
+                            SetWindowCompositionAttribute(hwnd, ref data);
+                        }
+                        finally { Marshal.FreeHGlobal(data.Data); }
+                    }
+                    catch { }
+                }
                 // None => backdrop = null（纯色不透明）
+
                 try { this.SystemBackdrop = backdrop; } catch { }
 
                 // 2. 设置根 Grid 透明度：透明则背景材质透出，不透明则使用主题画刷
@@ -1917,9 +2052,15 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                     var root = this.Content as FrameworkElement;
                     if (root is Grid rootGrid)
                     {
-                        rootGrid.Background = transparentBackground && backdrop != null
-                            ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent)
-                            : (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["ApplicationPageBackgroundThemeBrush"];
+                        bool isAeroOrLiquid = string.Equals(backdropType, "Aero", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(backdropType, "LiquidGlass", StringComparison.OrdinalIgnoreCase);
+                        // Aero/LiquidGlass 使用自定义透明度（SetWindowCompositionAttribute 自带效果）
+                        if (isAeroOrLiquid && transparentBackground)
+                            rootGrid.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                        else if (transparentBackground && backdrop != null)
+                            rootGrid.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                        else
+                            rootGrid.Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["ApplicationPageBackgroundThemeBrush"];
                     }
                 }
                 catch { }
@@ -1975,10 +2116,18 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                 if (IsWindowMaximized(hwnd))
                 {
                     SendMessage(hwnd, WM_SYSCOMMAND, new IntPtr(SC_RESTORE), IntPtr.Zero);
+                    // 更新图标为最大化
+                    var root = this.Content as FrameworkElement;
+                    if (root?.FindName("MaxIcon") is FontIcon icon)
+                        icon.Glyph = "\uE922"; // 最大化图标
                 }
                 else
                 {
                     SendMessage(hwnd, WM_SYSCOMMAND, new IntPtr(SC_MAXIMIZE), IntPtr.Zero);
+                    // 更新图标为还原
+                    var root = this.Content as FrameworkElement;
+                    if (root?.FindName("MaxIcon") is FontIcon icon)
+                        icon.Glyph = "\uE923"; // 还原图标
                 }
             }
             catch { }
@@ -2031,6 +2180,11 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                     toggleBtn.Content = new FontIcon { Glyph = glyph, FontFamily = new FontFamily("Segoe UI Symbol") };
                 }
                 UpdateTitleBarColors();
+                // 重新应用背景材质（LiquidGlass/Aero 需要根据主题更新着色）
+                var backdropType = _config.TryGetValue("backdrop_type", out var btv) ? btv : "Mica";
+                var transparent = _config.TryGetValue("transparent_background", out var tgv)
+                    ? tgv.Equals("true", StringComparison.OrdinalIgnoreCase) : true;
+                ApplyBackdrop(backdropType, transparent);
             }
             catch { }
         }
