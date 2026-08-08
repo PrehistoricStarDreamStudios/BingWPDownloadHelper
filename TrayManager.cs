@@ -44,11 +44,19 @@ namespace BingPaper
                     ContextMenuMode = H.NotifyIcon.ContextMenuMode.SecondWindow,
                 };
 
-                // 设置图标：H.NotifyIcon.WinUI 在 unpackaged 模式下用 BitmapImage 加载 .ico
-                // 会触发 ToIconAsync → System.Drawing.Icon(stream) 异步抛 "picture must be a picture
-                // that can be used as a Icon"，且该异常无法被 try-catch 捕获（在 OnIconSourceChanged
-                // 的异步回调中抛出）。因此这里不设置 IconSource，托盘将显示默认图标，避免启动崩溃。
-                // 如需自定义图标，后续可改用 GeneratedIconSource 或 Win32 直接注入 hIcon。
+                // 设置图标：使用 GeneratedIconSource 生成简洁图标
+                // （避免 unpackaged 模式下 BitmapImage + .ico 的异步崩溃问题）
+                try
+                {
+                    _trayIcon.IconSource = new Microsoft.UI.Xaml.Media.Imaging.GeneratedIconSource
+                    {
+                        Glyph = "\uE896", // 下载图标
+                        Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Colors.White),
+                        Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                            Windows.UI.Color.FromArgb(255, 0, 120, 212)), // 蓝色背景
+                    };
+                }
+                catch { }
 
                 // 构建右键菜单（使用 ContextFlyout，WinUI3 标准属性）
                 _menu = new MenuFlyout();

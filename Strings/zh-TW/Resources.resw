@@ -128,6 +128,11 @@
   <data name="ToolOptimizeMemoryDesc.Text" xml:space="preserve"><value>最佳化記憶體：將使用率較低的記憶體壓縮至虛擬記憶體分頁檔內。</value></data>
   <data name="ToolOptimizeMemoryBtn.Content" xml:space="preserve"><value>立即最佳化</value></data>
 
+  <!-- 系統匣圖示 -->
+  <data name="TrayTooltip" xml:space="preserve"><value>必應桌面布景主題下載器</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>顯示視窗</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>結束</value></data>
+
   <!-- Fluent Design ToggleSwitch keys（布林開關由 CheckBox 改為 ToggleSwitch） -->
   <data name="AutoStartChk.Header" xml:space="preserve"><value>開機自動啟動</value></data>
   <data name="AutoStartChk.OnContent" xml:space="preserve"><value>開啟</value></data>
