@@ -51,13 +51,7 @@ namespace BingPaper
             _callbackMessage = RegisterWindowMessage("BingPaper_TrayCallback_" + Guid.NewGuid().ToString("N"));
 
             // 加载 .ico 图标
-            var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "appicon.ico");
-            if (!System.IO.File.Exists(iconPath))
-                iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "appicon.ico");
-            if (System.IO.File.Exists(iconPath))
-            {
-                _hIcon = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
-            }
+            LoadIcon();
 
             // 子类化窗口以接收托盘回调消息
             _subclassProc = WndProc;
@@ -66,6 +60,51 @@ namespace BingPaper
 
             // 创建托盘图标
             AddIcon();
+        }
+
+        private void LoadIcon()
+        {
+            // 尝试多个路径查找 .ico 文件
+            string[] searchPaths = [
+                System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "appicon.ico"),
+                System.IO.Path.Combine(AppContext.BaseDirectory, "appicon.ico"),
+                System.IO.Path.Combine(Environment.CurrentDirectory, "Assets", "appicon.ico"),
+                System.IO.Path.Combine(Environment.CurrentDirectory, "appicon.ico"),
+            ];
+
+            string? foundPath = null;
+            foreach (var p in searchPaths)
+            {
+                if (System.IO.File.Exists(p))
+                {
+                    foundPath = p;
+                    break;
+                }
+            }
+
+            if (foundPath != null)
+            {
+                _hIcon = LoadImage(IntPtr.Zero, foundPath, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
+            }
+
+            // 如果 .ico 加载失败，尝试从 appicon.png 加载
+            if (_hIcon == IntPtr.Zero)
+            {
+                string[] pngPaths = [
+                    System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "appicon.png"),
+                    System.IO.Path.Combine(AppContext.BaseDirectory, "appicon.png"),
+                ];
+                foreach (var p in pngPaths)
+                {
+                    if (System.IO.File.Exists(p))
+                    {
+                        // 使用 LoadImage 加载 .png 需要 LR_LOADFROMFILE，但 LoadImage 对 .png 支持有限
+                        // 这里仅作为 fallback，实际 .ico 是首选
+                        _hIcon = LoadImage(IntPtr.Zero, p, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
+                        if (_hIcon != IntPtr.Zero) break;
+                    }
+                }
+            }
         }
 
         private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam, uint uIdSubclass, uint dwRefData)
@@ -89,32 +128,101 @@ namespace BingPaper
             return DefSubclassProc(hWnd, msg, wParam, lParam);
         }
 
+        /// <summary>
+        /// 使用手动内存分配构造 NOTIFYICONDATAW 并调用 Shell_NotifyIcon。
+        /// 避免 .NET 结构体布局与 Win32 API 不一致导致的 cbSize 不匹配问题。
+        /// </summary>
         private void AddIcon()
         {
             if (_iconAdded || _windowHandle == IntPtr.Zero)
                 return;
 
-            var nid = new NOTIFYICONDATA
-            {
-                cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATA>(),
-                hWnd = _windowHandle,
-                uID = 0,
-                uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE,
-                hIcon = _hIcon,
-                uCallbackMessage = _callbackMessage,
-                szTip = (GetString("TrayTooltip") ?? "Bing Wallpaper"),
-            };
-            if (nid.szTip.Length > 127)
-                nid.szTip = nid.szTip[..127];
+            const int NOTIFYICONDATAW_V3_SIZE = 928; // 0x3A0 - Win10 版本
 
-            _iconAdded = Shell_NotifyIcon(NIM_ADD, ref nid);
-
-            // 如果失败，尝试 V2 结构体大小
-            if (!_iconAdded)
+            // 分配+清零内存
+            IntPtr pNid = Marshal.AllocHGlobal(NOTIFYICONDATAW_V3_SIZE);
+            try
             {
-                nid.cbSize = NOTIFYICONDATA_V2_SIZE;
-                _iconAdded = Shell_NotifyIcon(NIM_ADD, ref nid);
+                var zero = new byte[NOTIFYICONDATAW_V3_SIZE];
+                Marshal.Copy(zero, 0, pNid, NOTIFYICONDATAW_V3_SIZE);
+
+                // 手动设置字段（使用 x64 4-byte pack 布局）
+                int offset = 0;
+
+                WriteInt32(pNid, offset, NOTIFYICONDATAW_V3_SIZE); offset += 4; // cbSize
+                WriteIntPtr(pNid, offset, _windowHandle); offset += 8;          // hWnd
+                WriteInt32(pNid, offset, 0); offset += 4;                      // uID
+                WriteInt32(pNid, offset, (int)(NIF_ICON | NIF_TIP | NIF_MESSAGE)); offset += 4; // uFlags
+                WriteInt32(pNid, offset, (int)_callbackMessage); offset += 4;  // uCallbackMessage
+                WriteIntPtr(pNid, offset, _hIcon); offset += 8;                // hIcon
+
+                // szTip[128] - 固定长度 Unicode 字符串
+                var tip = (GetString("TrayTooltip") ?? "Bing Wallpaper");
+                if (tip.Length > 127) tip = tip[..127];
+                offset += WriteFixedString(pNid, offset, tip, 128);
+
+                // dwState / dwStateMask - 跳过（不需要）
+                offset += 8;
+
+                // szInfo[256] - 跳过（不需要）
+                offset += 512;
+
+                // uVersion - 跳过
+                offset += 4;
+
+                // szInfoTitle[64] - 跳过（不需要）
+                offset += 128;
+
+                // dwInfoFlags - 跳过
+                offset += 4;
+
+                // guidItem - 跳过（不需要，但 V3 需要此字段占位）
+                offset += 16;
+
+                // hBalloonIcon - 跳过（不需要）
+                offset += 8;
+
+                // 调用 Shell_NotifyIcon
+                _iconAdded = Shell_NotifyIcon(NIM_ADD, pNid);
+
+                // 如果 V3 失败，尝试 V2 大小
+                if (!_iconAdded)
+                {
+                    const int NOTIFYICONDATAW_V2_SIZE = 904; // 0x388
+                    WriteInt32(pNid, 0, NOTIFYICONDATAW_V2_SIZE); // 只改 cbSize
+                    _iconAdded = Shell_NotifyIcon(NIM_ADD, pNid);
+                }
             }
+            finally
+            {
+                Marshal.FreeHGlobal(pNid);
+            }
+        }
+
+        private static void WriteInt32(IntPtr ptr, int offset, int value)
+        {
+            Marshal.WriteInt32(ptr, offset, value);
+        }
+
+        private static void WriteIntPtr(IntPtr ptr, int offset, IntPtr value)
+        {
+            Marshal.WriteIntPtr(ptr, offset, value);
+        }
+
+        private static int WriteFixedString(IntPtr ptr, int offset, string value, int maxChars)
+        {
+            // 将字符串转为字节数组（Unicode/UTF-16LE）
+            var chars = value.ToCharArray();
+            if (chars.Length > maxChars - 1)
+                Array.Resize(ref chars, maxChars - 1);
+
+            var bytes = System.Text.Encoding.Unicode.GetBytes(chars);
+            Marshal.Copy(bytes, 0, ptr + offset, bytes.Length);
+
+            // 写入空终止符
+            Marshal.WriteInt16(ptr, offset + bytes.Length, 0);
+
+            return maxChars * 2; // 返回写入的字节数
         }
 
         private void RemoveIcon()
@@ -122,13 +230,21 @@ namespace BingPaper
             if (!_iconAdded || _windowHandle == IntPtr.Zero)
                 return;
 
-            var nid = new NOTIFYICONDATA
+            const int NOTIFYICONDATAW_V3_SIZE = 928;
+            IntPtr pNid = Marshal.AllocHGlobal(NOTIFYICONDATAW_V3_SIZE);
+            try
             {
-                cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATA>(),
-                hWnd = _windowHandle,
-                uID = 0,
-            };
-            Shell_NotifyIcon(NIM_DELETE, ref nid);
+                var zero = new byte[NOTIFYICONDATAW_V3_SIZE];
+                Marshal.Copy(zero, 0, pNid, NOTIFYICONDATAW_V3_SIZE);
+                WriteInt32(pNid, 0, NOTIFYICONDATAW_V3_SIZE);
+                WriteIntPtr(pNid, 4, _windowHandle);
+
+                Shell_NotifyIcon(NIM_DELETE, pNid);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pNid);
+            }
             _iconAdded = false;
         }
 
@@ -247,37 +363,11 @@ namespace BingPaper
         private const int WM_RBUTTONUP = 0x0205;
         private const int WM_DESTROY = 0x0002;
 
-        private const uint NOTIFYICONDATA_V2_SIZE = 904;
-
-        // Win10 下 Shell_NotifyIcon 使用的 NOTIFYICONDATAW 结构体
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private struct NOTIFYICONDATA
-        {
-            public uint cbSize;
-            public IntPtr hWnd;
-            public uint uID;
-            public uint uFlags;
-            public uint uCallbackMessage;
-            public IntPtr hIcon;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string szTip;
-            public uint dwState;
-            public uint dwStateMask;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public string szInfo;
-            public uint uVersion;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-            public string szInfoTitle;
-            public uint dwInfoFlags;
-            public Guid guidItem;
-            public IntPtr hBalloonIcon;
-        }
-
         // 子类化回调委托
         private delegate IntPtr SUBCLASSPROC(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, uint uIdSubclass, uint dwRefData);
 
         [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool Shell_NotifyIcon(uint dwMessage, ref NOTIFYICONDATA lpData);
+        private static extern bool Shell_NotifyIcon(uint dwMessage, IntPtr lpData);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern IntPtr LoadImage(IntPtr hInst, string name, int type, int cx, int cy, uint flags);
