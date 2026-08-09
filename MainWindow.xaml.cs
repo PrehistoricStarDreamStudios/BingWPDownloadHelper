@@ -143,6 +143,9 @@ namespace BingPaper
                     var style = (uint)(long)GetWindowLongPtr64(hwnd, GWL_STYLE);
                     style = style & ~(uint)WS_SYSMENU & ~(uint)WS_MINIMIZEBOX & ~(uint)WS_MAXIMIZEBOX;
                     SetWindowLongPtr64(hwnd, GWL_STYLE, (IntPtr)(long)style);
+                    // 刷新窗口非客户区使样式变更生效
+                    SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
+                        SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
                 }
                 catch { }
             }
@@ -175,6 +178,18 @@ namespace BingPaper
                 try
                 {
                     try { UpdateTitleBarColors(); } catch { }
+
+                    // 窗口激活后再次确保系统标题栏按钮被隐藏（OverlappedPresenter 可能在初始化时重设样式）
+                    try
+                    {
+                        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                        var style = (uint)(long)GetWindowLongPtr64(hwnd, GWL_STYLE);
+                        style = style & ~(uint)WS_SYSMENU & ~(uint)WS_MINIMIZEBOX & ~(uint)WS_MAXIMIZEBOX;
+                        SetWindowLongPtr64(hwnd, GWL_STYLE, (IntPtr)(long)style);
+                        SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
+                            SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+                    }
+                    catch { }
 
                     if (!_initialSizeApplied)
                     {
@@ -1783,6 +1798,12 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
         private const int SW_MINIMIZE = 6;
         private const int SW_RESTORE = 9;
         private const int SW_MAXIMIZE = 3;
+
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint SWP_NOMOVE = 0x0002;
+        private const uint SWP_NOZORDER = 0x0004;
+        private const uint SWP_NOACTIVATE = 0x0010;
+        private const uint SWP_FRAMECHANGED = 0x0020;
 
         private const int GWL_STYLE = -16;
         private const long WS_SYSMENU = 0x00080000L;
