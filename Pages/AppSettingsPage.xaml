@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BingPaper.Pages.AppSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Margin="8">
+        <TextBlock x:Uid="AppSettingsPageTitle" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+            <ToggleSwitch x:Name="AutoStartCheck" x:Uid="AutoStartChk" Toggled="AutoStartCheck_Toggled" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+            <TextBlock x:Uid="CloseBehaviorLabel" VerticalAlignment="Center" />
+            <ComboBox x:Name="CloseBehaviorCombo" Width="180" Margin="8,0" SelectedIndex="0" SelectionChanged="CloseBehaviorCombo_SelectionChanged">
+                <ComboBoxItem x:Uid="CloseTray" Tag="Tray" />
+                <ComboBoxItem x:Uid="CloseExit" Tag="Exit" />
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+            <TextBlock x:Uid="ThemeModeLabel" VerticalAlignment="Center" />
+            <ComboBox x:Name="ThemeModeCombo" Width="140" Margin="8,0" SelectedIndex="0" SelectionChanged="ThemeMode_SelectionChanged">
+                <ComboBoxItem x:Uid="ThemeSystem" Tag="System" />
+                <ComboBoxItem x:Uid="ThemeLight" Tag="Light" />
+                <ComboBoxItem x:Uid="ThemeDark" Tag="Dark" />
+            </ComboBox>
+            <TextBlock x:Uid="ColorThemeLabel" VerticalAlignment="Center" Margin="16,0,0,0" />
+            <ComboBox x:Name="ColorThemeCombo" Width="140" Margin="8,0" SelectedIndex="0" SelectionChanged="ColorTheme_SelectionChanged">
+                <ComboBoxItem x:Uid="ColorSystem" Tag="System" />
+                <ComboBoxItem x:Uid="ColorBlue" Tag="Blue" />
+                <ComboBoxItem x:Uid="ColorGreen" Tag="Green" />
+                <ComboBoxItem x:Uid="ColorOrange" Tag="Orange" />
+                <ComboBoxItem x:Uid="ColorPurple" Tag="Purple" />
+                <ComboBoxItem x:Uid="ColorPink" Tag="Pink" />
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+            <TextBlock x:Uid="DownloadThreadsLabel" VerticalAlignment="Center" />
+            <NumberBox x:Name="DownloadThreadsBox" Minimum="1" Maximum="32" Value="4" Width="100" Margin="8,0" />
+            <TextBlock x:Uid="DownloadThreadsHint" VerticalAlignment="Center"
+                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+            <TextBlock x:Uid="LanguageLabel" VerticalAlignment="Center" />
+            <ComboBox x:Name="LanguageCombo" Width="220" Margin="8,0" SelectedIndex="0" SelectionChanged="LanguageCombo_SelectionChanged">
+                <ComboBoxItem x:Uid="LangZhCN" Tag="zh-CN" />
+                <ComboBoxItem x:Uid="LangZhHK" Tag="zh-HK" />
+                <ComboBoxItem x:Uid="LangZhTW" Tag="zh-TW" />
+                <ComboBoxItem x:Uid="LangEnUS" Tag="en-US" />
+                <ComboBoxItem x:Uid="LangEnGB" Tag="en-GB" />
+            </ComboBox>
+            <TextBlock x:Name="LanguageRestartHint" Text="" VerticalAlignment="Center" Margin="8,0" Foreground="Orange" FontSize="12" Visibility="Collapsed" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+            <TextBlock x:Uid="BackdropTypeLabel" VerticalAlignment="Center" />
+            <ComboBox x:Name="BackdropTypeCombo" Width="160" Margin="8,0" SelectedIndex="0" SelectionChanged="BackdropType_SelectionChanged">
+                <ComboBoxItem x:Uid="BackdropMica" Tag="Mica" />
+                <ComboBoxItem x:Uid="BackdropAcrylic" Tag="Acrylic" />
+                <ComboBoxItem Content="Aero（Win7 玻璃）" Tag="Aero" />
+                <ComboBoxItem Content="LiquidGlass（iOS/MacOS）" Tag="LiquidGlass" />
+                <ComboBoxItem x:Uid="BackdropNone" Tag="None" />
+            </ComboBox>
+            <ToggleSwitch x:Name="TransparentBackgroundSwitch" x:Uid="TransparentBackgroundChk" Margin="16,0,0,0" Toggled="TransparentBackground_Toggled" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+            <ToggleSwitch x:Name="AutoUpdateListCheck" x:Uid="AutoUpdateListChk" IsOn="True" />
+            <Button x:Name="CheckUpdateNowBtn" x:Uid="CheckUpdateNowBtn" Margin="12,0,0,0" Padding="12,5" Click="CheckUpdateNow_Click" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+            <TextBlock x:Uid="DefaultListLabel" VerticalAlignment="Center" />
+            <ComboBox x:Name="DefaultListCombo" Width="320" Margin="8,0" SelectedIndex="0">
+                <ComboBoxItem x:Uid="ListLocal" Tag="local" />
+                <ComboBoxItem Content="sdnet.page.gd" Tag="sdnet.page.gd" IsEnabled="False" />
+                <ComboBoxItem Content="worldno1steve.github.io" Tag="worldno1steve.github.io" IsEnabled="False" />
+                <ComboBoxItem Content="sdnet.pages.dev" Tag="sdnet.pages.dev" IsEnabled="False" />
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+            <TextBlock x:Uid="ApiSourceLabel" VerticalAlignment="Center" />
+            <ComboBox x:Name="ApiSourceCombo" Width="320" Margin="8,0" SelectedIndex="0">
+                <ComboBoxItem x:Uid="ApiBing" />
+                <ComboBoxItem Content="----" IsEnabled="False" />
+                <ComboBoxItem Content="----" IsEnabled="False" />
+            </ComboBox>
+        </StackPanel>
+
+        <Button x:Uid="SaveSettingsBtn" Click="SaveSoftwareSettings_Click" Width="120" Margin="0,8,0,0" />
+        <TextBlock x:Name="AppSettingsStatusText" Margin="0,8,0,0" />
+    </StackPanel>
+</Page>

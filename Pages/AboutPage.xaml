@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BingPaper.Pages.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+        <StackPanel HorizontalAlignment="Stretch" Spacing="8" Margin="8,0,8,12">
+
+            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,4">
+                <StackPanel>
+                    <TextBlock x:Uid="AboutPageTitle" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBlock x:Name="AboutVersionText" x:Uid="AboutVersionLabel" FontSize="13"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,8" />
+                    <TextBlock x:Uid="AboutDescriptionText" TextWrapping="Wrap" FontSize="13" />
+                </StackPanel>
+            </Border>
+
+            <Expander x:Uid="AboutLinksExpander" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                <StackPanel HorizontalAlignment="Stretch">
+                    <TextBlock x:Uid="AboutLinksHint" TextWrapping="Wrap" Margin="0,4,0,8"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button x:Uid="AboutLinksBtn" Click="OpenLinksButton_Click" Margin="0,0,8,4" />
+                        <Button x:Uid="AboutBingBtn" Click="OpenBingLink_Click" Margin="0,0,8,4" />
+                        <Button x:Uid="AboutProjectGitBtn" Click="OpenProjectGit_Click" Margin="0,0,8,4" />
+                        <Button x:Uid="AboutBiliBtn" Click="OpenBili_Click" Margin="0,0,8,4" />
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
+            <Expander x:Uid="AboutMottoExpander" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                <StackPanel HorizontalAlignment="Stretch">
+                    <TextBlock x:Name="MottoText" x:Uid="AboutMottoHint" TextWrapping="Wrap" FontStyle="Italic" Margin="0,4,0,8" />
+                    <Button x:Uid="AboutShowMottoBtn" Click="ShowMottoButton_Click" />
+                </StackPanel>
+            </Expander>
+
+            <Expander x:Uid="AboutToolsExpander" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                <StackPanel HorizontalAlignment="Stretch">
+                    <TextBlock x:Uid="ToolOptimizeMemoryDesc" TextWrapping="Wrap" Margin="0,4,0,8" FontSize="12" />
+                    <Button x:Uid="ToolOptimizeMemoryBtn" Click="OptimizeMemoryButton_Click" />
+                </StackPanel>
+            </Expander>
+
+            <Expander x:Uid="AboutAuthorExpander" HorizontalAlignment="Stretch">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button x:Uid="AboutAuthorBiliBtn" Click="OpenBili_Click" Margin="4" />
+                    <Button x:Uid="AboutMailBtn" Click="OpenMail_Click" Margin="4" />
+                    <Button Content="GitHub" Click="OpenAuthorGit_Click" Margin="4" />
+                    <Button Content="X" Click="OpenAuthorX_Click" Margin="4" />
+                </StackPanel>
+            </Expander>
+
+            <Expander x:Uid="AboutProjectExpander" HorizontalAlignment="Stretch">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button x:Uid="AboutProjectGitBtn2" Click="OpenProjectGit_Click" Margin="4" />
+                </StackPanel>
+            </Expander>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

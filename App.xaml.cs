@@ -34,24 +34,20 @@ namespace BingPaper
     /// </summary>
     public partial class App : Application
     {
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
+        /// <summary>全局 MainWindow 实例，供各页面访问。</summary>
+        public static MainWindow? MainWindowInstance { get; private set; }
+
         public App()
         {
             InitializeComponent();
         }
 
-        /// <summary>
-        /// Invoked when the application is launched.
-        /// </summary>
-        /// <param name="args">Details about the launch request.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             try
             {
                 var window = new MainWindow();
+                MainWindowInstance = window;
                 window.Activate();
             }
             catch (Exception ex)
