@@ -1155,7 +1155,7 @@ namespace BingPaper
             catch { }
         }
 
-        private void Seg_Click(object sender, RoutedEventArgs e)
+        private async void Seg_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -1165,11 +1165,9 @@ namespace BingPaper
                 Button? btn = sender as Button;
                 if (btn != null)
                 {
-                    // 移动指示器到目标按钮并高亮
                     MoveSelToButton(btn);
                 }
 
-                // 加载对应清晰度图片
                 var mainImg = root?.FindName("MainImage") as Microsoft.UI.Xaml.Controls.Image;
                 if (mainImg != null)
                 {
@@ -1177,31 +1175,27 @@ namespace BingPaper
                     if (btn?.Name == "Btn720") suffix = "_1280x720.jpg";
                     else if (btn?.Name == "Btn1080") suffix = "_1920x1080.jpg";
 
-                    try
+                    var http = new System.Net.Http.HttpClient();
+                    var url = "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US";
+                    var s = await http.GetStringAsync(url);
+                    using var doc = System.Text.Json.JsonDocument.Parse(s);
+                    var images = doc.RootElement.GetProperty("images");
+                    if (images.GetArrayLength() > 0)
                     {
-                        var http = new System.Net.Http.HttpClient();
-                        var url = "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US";
-                        var s = http.GetStringAsync(url).Result;
-                        using var doc = System.Text.Json.JsonDocument.Parse(s);
-                        var images = doc.RootElement.GetProperty("images");
-                        if (images.GetArrayLength() > 0)
+                        var first = images[0];
+                        var urlBase = first.GetProperty("urlbase").GetString();
+                        if (!string.IsNullOrEmpty(urlBase))
                         {
-                            var first = images[0];
-                            var urlBase = first.GetProperty("urlbase").GetString();
-                            if (!string.IsNullOrEmpty(urlBase))
-                            {
-                                var full = "https://www.bing.com" + urlBase + suffix;
-                                mainImg.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(full));
+                            var full = "https://www.bing.com" + urlBase + suffix;
+                            mainImg.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(full));
 
-                                var titleBlock = root?.FindName("ImageTitle") as TextBlock;
-                                if (titleBlock != null && first.TryGetProperty("copyright", out var cp)) titleBlock.Text = cp.GetString();
-                            }
+                            var titleBlock = root?.FindName("ImageTitle") as TextBlock;
+                            if (titleBlock != null && first.TryGetProperty("copyright", out var cp)) titleBlock.Text = cp.GetString();
                         }
                     }
-                    catch { }
                 }
             }
-            catch { }
+            catch (Exception ex) { LogException(ex); }
         }
 
         private int _currentSegIndex = 2;
@@ -1505,7 +1499,7 @@ private void MainWindow_Loaded(object sender, RoutedEventArgs e)
 
 
 // save wallpaper helper
-private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, string suggestedName)
+private async Task<string?> SaveImageToWallpaperAsync(Microsoft.UI.Xaml.Controls.Image image, string suggestedName)
 {
     try
     {
@@ -1513,16 +1507,16 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
         {
             var uri = bi.UriSource;
             using var http = new System.Net.Http.HttpClient();
-            var data = http.GetByteArrayAsync(uri).Result;
+            var data = await http.GetByteArrayAsync(uri);
             var ext = Path.GetExtension(uri.AbsolutePath);
             if (string.IsNullOrEmpty(ext)) ext = ".jpg";
             var fileName = suggestedName ?? ("bing_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ext);
             var outPath = Path.Combine(WallpaperFolderPath ?? AppFolderPath, fileName);
-            File.WriteAllBytes(outPath, data);
+            await File.WriteAllBytesAsync(outPath, data);
             return outPath;
         }
     }
-    catch { }
+    catch (Exception ex) { LogException(ex); }
     return null;
 }
 
@@ -2494,7 +2488,7 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                                 }
                                 catch { node = null; }
                             }
-                            if (node == null) { if (status != null) status.Text = $"未找到 {dateStr} 的 {selRes} 分辨率壁纸，跳过。"; return; }
+                            if (node == null) { try { if (status != null) this.DispatcherQueue.TryEnqueue(() => status.Text = $"未找到 {dateStr} 的 {selRes} 分辨率壁纸，跳过。"); } catch { } return; }
                             var u = node.Element("url")?.Value;
                             if (string.IsNullOrEmpty(u)) return;
                             if (u.StartsWith("//")) u = "https:" + u; else if (u.StartsWith("/")) u = "https://cn.bing.com" + u;
@@ -2526,7 +2520,7 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                             if (File.Exists(dest)) { Interlocked.Increment(ref downloaded); return; }
                             try
                             {
-                                try { if (status != null) status.Text = $"开始下载: {uri} -> 目标分辨率 {selRes}"; } catch { }
+                                try { if (status != null) this.DispatcherQueue.TryEnqueue(() => status.Text = $"开始下载: {uri} -> 目标分辨率 {selRes}"); } catch { }
 
                                 bool ok = false;
                                 try
