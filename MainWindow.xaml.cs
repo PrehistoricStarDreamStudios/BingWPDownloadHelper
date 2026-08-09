@@ -144,6 +144,7 @@ namespace BingPaper
             {
                 this.SetTitleBar(this.DragRegion);
                 UpdateTitleBarColors();
+                HideWin32TitleBarButtons();
             }
             catch { }
 
@@ -1812,6 +1813,17 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
         private const uint SWP_NOMOVE = 0x0002;
         private const uint SWP_NOZORDER = 0x0004;
         private const uint SWP_NOACTIVATE = 0x0010;
+        private const uint SWP_FRAMECHANGED = 0x0020;
+
+        private const int GWL_STYLE = -16;
+        private const long WS_MINIMIZEBOX = 0x00020000L;
+        private const long WS_MAXIMIZEBOX = 0x00010000L;
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr", SetLastError = true)]
+        private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr", SetLastError = true)]
+        private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
         [DllImport("user32.dll")]
         private static extern bool GetWindowPlacement(IntPtr hWnd, ref WINDOWPLACEMENT lpwndpl);
@@ -1846,6 +1858,26 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
             }
             catch { }
             return false;
+        }
+
+        // 隐藏 Win32 标题栏按钮（最小化/最大化），保留 WS_SYSMENU（关闭按钮 + 窗口图标）。
+        // WinUI3 的 ExtendsContentIntoTitleBar 会自行绘制 Fluent 风格按钮。
+        private void HideWin32TitleBarButtons()
+        {
+            try
+            {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                var style = (uint)(long)GetWindowLongPtr64(hwnd, GWL_STYLE);
+                uint mask = (uint)WS_MINIMIZEBOX | (uint)WS_MAXIMIZEBOX;
+                if ((style & mask) != 0)
+                {
+                    style &= ~mask;
+                    SetWindowLongPtr64(hwnd, GWL_STYLE, (IntPtr)(long)style);
+                    SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
+                        SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+                }
+            }
+            catch { }
         }
 
         // 更新标题栏颜色：使用系统默认（null），不强制设置任何颜色
@@ -2083,7 +2115,7 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                 }
                 catch { }
 
-                // 3. WinUI3 的 ExtendsContentIntoTitleBar 已自动处理标题栏按钮，无需额外操作
+                // 3. 标题栏按钮由 WinUI3 自行管理，HideWin32TitleBarButtons 已在构造函数调用
             }
             catch { }
         }
