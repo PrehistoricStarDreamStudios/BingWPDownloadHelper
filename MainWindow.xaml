@@ -115,6 +115,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <Border Margin="5" CornerRadius="12" Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="4">
@@ -122,6 +123,77 @@
                         </Border>
 
                         <TextBlock x:Name="ImageTitle" Grid.Row="1" Text="" HorizontalAlignment="Center" Margin="8,8,8,0" FontSize="14" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+
+                        <!-- 分辨率选择器 -->
+                        <Grid x:Name="SegGrid" Grid.Row="2" Height="40" Margin="80,4,80,8" Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 选中指示器 -->
+                            <Border x:Name="SelIndicator"
+                                    Background="{ThemeResource SystemControlHighlightAccentBrush}"
+                                    CornerRadius="6"
+                                    Height="32"
+                                    Width="0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Opacity="0">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="SelTransform" X="0" Y="0" />
+                                </Border.RenderTransform>
+                            </Border>
+
+                            <!-- 720p 按钮 -->
+                            <Grid x:Name="B720" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <Button x:Name="Btn720"
+                                        Click="Seg_Click"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Width="80"
+                                        Height="34"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                        FontSize="14"
+                                        FontWeight="SemiBold"
+                                        Content="720p" />
+                            </Grid>
+
+                            <!-- 1080p 按钮 -->
+                            <Grid x:Name="B1080" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <Button x:Name="Btn1080"
+                                        Click="Seg_Click"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Width="80"
+                                        Height="34"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                        FontSize="14"
+                                        FontWeight="SemiBold"
+                                        Content="1080p" />
+                            </Grid>
+
+                            <!-- UHD 按钮 -->
+                            <Grid x:Name="BUHD" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <Button x:Name="BtnUHD"
+                                        Click="Seg_Click"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Width="80"
+                                        Height="34"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                        FontSize="14"
+                                        FontWeight="SemiBold"
+                                        Content="UHD" />
+                            </Grid>
+                        </Grid>
                     </Grid>
 
                     <!-- 下载壁纸页面 -->
