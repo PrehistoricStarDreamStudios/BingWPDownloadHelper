@@ -138,16 +138,7 @@ namespace BingPaper
                 catch { }
 
                 // 隐藏系统标题栏按钮（Win32 样式），使用自定义 Fluent 风格按钮
-                try
-                {
-                    var style = (uint)(long)GetWindowLongPtr64(hwnd, GWL_STYLE);
-                    style = style & ~(uint)WS_SYSMENU & ~(uint)WS_MINIMIZEBOX & ~(uint)WS_MAXIMIZEBOX;
-                    SetWindowLongPtr64(hwnd, GWL_STYLE, (IntPtr)(long)style);
-                    // 刷新窗口非客户区使样式变更生效
-                    SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
-                        SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-                }
-                catch { }
+                HideSystemTitleBarButtons();
             }
             catch { }
 
@@ -180,14 +171,34 @@ namespace BingPaper
                     try { UpdateTitleBarColors(); } catch { }
 
                     // 窗口激活后再次确保系统标题栏按钮被隐藏（OverlappedPresenter 可能在初始化时重设样式）
+                    HideSystemTitleBarButtons();
+
+                    // 延迟重试：使用 DispatcherQueueTimer 在窗口完全显示后再次应用样式
+                    // 因为 OverlappedPresenter 可能在 Activated 之后才最终设置窗口样式
                     try
                     {
-                        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-                        var style = (uint)(long)GetWindowLongPtr64(hwnd, GWL_STYLE);
-                        style = style & ~(uint)WS_SYSMENU & ~(uint)WS_MINIMIZEBOX & ~(uint)WS_MAXIMIZEBOX;
-                        SetWindowLongPtr64(hwnd, GWL_STYLE, (IntPtr)(long)style);
-                        SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
-                            SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+                        var timer = this.DispatcherQueue.CreateTimer();
+                        timer.Interval = TimeSpan.FromMilliseconds(300);
+                        timer.Tick += (s, e) =>
+                        {
+                            timer.Stop();
+                            HideSystemTitleBarButtons();
+                        };
+                        timer.Start();
+                    }
+                    catch { }
+
+                    // 第二次延迟重试（1.5秒后），确保万无一失
+                    try
+                    {
+                        var timer2 = this.DispatcherQueue.CreateTimer();
+                        timer2.Interval = TimeSpan.FromMilliseconds(1500);
+                        timer2.Tick += (s, e) =>
+                        {
+                            timer2.Stop();
+                            HideSystemTitleBarButtons();
+                        };
+                        timer2.Start();
                     }
                     catch { }
 
@@ -1885,6 +1896,26 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                     try { titleBar.InactiveForegroundColor = null; } catch { }
                     try { titleBar.InactiveBackgroundColor = null; } catch { }
                 }
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// 隐藏系统标题栏的 Win32 按钮（最小化/最大化/关闭）。
+        /// 在 ExtendsContentIntoTitleBar=true 模式下，WinUI3 会隐藏标题栏文本，
+        /// 但系统按钮仍然可能可见。通过移除窗口样式中的 WS_SYSMENU/WS_MINIMIZEBOX/WS_MAXIMIZEBOX
+        /// 来彻底隐藏它们，并通过 SetWindowPos 刷新非客户区。
+        /// </summary>
+        private void HideSystemTitleBarButtons()
+        {
+            try
+            {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                var style = (uint)(long)GetWindowLongPtr64(hwnd, GWL_STYLE);
+                style = style & ~(uint)WS_SYSMENU & ~(uint)WS_MINIMIZEBOX & ~(uint)WS_MAXIMIZEBOX;
+                SetWindowLongPtr64(hwnd, GWL_STYLE, (IntPtr)(long)style);
+                SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
+                    SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
             }
             catch { }
         }
