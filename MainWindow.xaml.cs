@@ -1902,18 +1902,31 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
 
         /// <summary>
         /// 隐藏系统标题栏的 Win32 按钮（最小化/最大化/关闭）。
-        /// 在 ExtendsContentIntoTitleBar=true 模式下，WinUI3 会隐藏标题栏文本，
-        /// 但系统按钮仍然可能可见。通过移除窗口样式中的 WS_SYSMENU/WS_MINIMIZEBOX/WS_MAXIMIZEBOX
-        /// 来彻底隐藏它们，并通过 SetWindowPos 刷新非客户区。
+        /// 方法一：移除 WS_SYSMENU/WS_MINIMIZEBOX/WS_MAXIMIZEBOX 样式位。
+        /// 方法二：设置 DWMWA_NCRENDERING_POLICY = DWMNCRP_DISABLED 禁用 DWM 对非客户区的渲染。
+        /// 两层保障确保 Win32 按钮不会出现。
         /// </summary>
         private void HideSystemTitleBarButtons()
         {
             try
             {
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+
+                // 方法一：移除窗口样式位，去掉系统菜单/最小化/最大化按钮
                 var style = (uint)(long)GetWindowLongPtr64(hwnd, GWL_STYLE);
                 style = style & ~(uint)WS_SYSMENU & ~(uint)WS_MINIMIZEBOX & ~(uint)WS_MAXIMIZEBOX;
                 SetWindowLongPtr64(hwnd, GWL_STYLE, (IntPtr)(long)style);
+
+                // 方法二：禁用 DWM 非客户区渲染，阻止 DWM 绘制标题栏 Win32 按钮
+                // DWMNCRP_DISABLED = 1：由窗口自己负责非客户区（WinUI3 通过 ExtendsContentIntoTitleBar 处理）
+                try
+                {
+                    var ncrp = 1; // DWMNCRP_DISABLED
+                    DwmSetWindowAttribute(hwnd, 2 /* DWMWA_NCRENDERING_POLICY */, ref ncrp, sizeof(int));
+                }
+                catch { }
+
+                // 刷新窗口框架使所有变更生效
                 SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
                     SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
             }
@@ -2129,6 +2142,9 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                     }
                 }
                 catch { }
+
+                // 3. 重新隐藏系统标题栏按钮（DwmExtendFrameIntoClientArea 可能触发 DWM 重绘非客户区）
+                HideSystemTitleBarButtons();
             }
             catch { }
         }
