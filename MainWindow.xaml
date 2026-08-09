@@ -19,12 +19,11 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 标题栏 48px：Fluent 风格自定义标题栏 + 自定义窗口控件按钮 -->
+        <!-- 标题栏 48px：Fluent 风格自定义标题栏 -->
         <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent" Height="48">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
@@ -59,40 +58,6 @@
                     x:Uid="ToggleThemeBtn">
                 <FontIcon x:Name="ToggleIcon" Glyph="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
             </Button>
-
-            <!-- 自定义 Fluent 风格窗口控件（最小化 / 最大化还原 / 关闭） -->
-            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Stretch">
-                <Button x:Name="MinButton"
-                        Click="MinButton_Click"
-                        Width="46" Height="32"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Padding="0"
-                        VerticalAlignment="Center"
-                        Style="{StaticResource CaptionButtonStyle}">
-                    <FontIcon Glyph="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10" />
-                </Button>
-                <Button x:Name="MaxButton"
-                        Click="MaxButton_Click"
-                        Width="46" Height="32"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Padding="0"
-                        VerticalAlignment="Center"
-                        Style="{StaticResource CaptionButtonStyle}">
-                    <FontIcon x:Name="MaxIcon" Glyph="&#xE922;" FontFamily="Segoe MDL2 Assets" FontSize="10" />
-                </Button>
-                <Button x:Name="CloseButton"
-                        Click="CloseButton_Click"
-                        Width="46" Height="32"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Padding="0"
-                        VerticalAlignment="Center"
-                        Style="{StaticResource CloseButtonStyle}">
-                    <FontIcon Glyph="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10" />
-                </Button>
-            </StackPanel>
         </Grid>
 
         <!-- NavigationView 主容器 -->

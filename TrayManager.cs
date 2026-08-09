@@ -51,7 +51,7 @@ namespace BingPaper
             _callbackMessage = RegisterWindowMessage("BingPaper_TrayCallback_" + Guid.NewGuid().ToString("N"));
 
             // 加载 .ico 图标
-            LoadIcon();
+            LoadAppIcon();
 
             // 子类化窗口以接收托盘回调消息
             _subclassProc = WndProc;
@@ -62,7 +62,7 @@ namespace BingPaper
             AddIcon();
         }
 
-        private void LoadIcon()
+        private void LoadAppIcon()
         {
             // 尝试多个路径查找 .ico 文件
             string[] searchPaths = [
@@ -135,6 +135,15 @@ namespace BingPaper
         private void AddIcon()
         {
             if (_iconAdded || _windowHandle == IntPtr.Zero)
+                return;
+
+            // 如果没有有效图标，使用系统默认应用程序图标作为 fallback
+            if (_hIcon == IntPtr.Zero)
+            {
+                _hIcon = LoadIcon(IntPtr.Zero, (IntPtr)32512); // IDI_APPLICATION
+            }
+
+            if (_hIcon == IntPtr.Zero)
                 return;
 
             const int NOTIFYICONDATAW_V3_SIZE = 928; // 0x3A0 - Win10 版本
@@ -371,6 +380,9 @@ namespace BingPaper
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern IntPtr LoadImage(IntPtr hInst, string name, int type, int cx, int cy, uint flags);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr LoadIcon(IntPtr hInstance, IntPtr lpIconName);
 
         [DllImport("user32.dll")]
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);

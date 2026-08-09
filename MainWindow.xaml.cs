@@ -116,7 +116,7 @@ namespace BingPaper
             this.ExtendsContentIntoTitleBar = true;
             // 背景材质在加载 _config 后由 ApplyBackdrop 统一应用（支持 Mica/Acrylic/None + 透明背景开关）
 
-            // 配置 OverlappedPresenter：原生 WinUI3 窗口样式（圆角、自定义标题栏按钮）
+            // 配置 OverlappedPresenter：原生 WinUI3 窗口样式（圆角 + Fluent 标题栏按钮）
             try
             {
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -136,9 +136,6 @@ namespace BingPaper
                     DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref cornerPreference, sizeof(int));
                 }
                 catch { }
-
-                // 隐藏系统标题栏按钮（Win32 样式），使用自定义 Fluent 风格按钮
-                HideSystemTitleBarButtons();
             }
             catch { }
 
@@ -169,38 +166,6 @@ namespace BingPaper
                 try
                 {
                     try { UpdateTitleBarColors(); } catch { }
-
-                    // 窗口激活后再次确保系统标题栏按钮被隐藏（OverlappedPresenter 可能在初始化时重设样式）
-                    HideSystemTitleBarButtons();
-
-                    // 延迟重试：使用 DispatcherQueueTimer 在窗口完全显示后再次应用样式
-                    // 因为 OverlappedPresenter 可能在 Activated 之后才最终设置窗口样式
-                    try
-                    {
-                        var timer = this.DispatcherQueue.CreateTimer();
-                        timer.Interval = TimeSpan.FromMilliseconds(300);
-                        timer.Tick += (s, e) =>
-                        {
-                            timer.Stop();
-                            HideSystemTitleBarButtons();
-                        };
-                        timer.Start();
-                    }
-                    catch { }
-
-                    // 第二次延迟重试（1.5秒后），确保万无一失
-                    try
-                    {
-                        var timer2 = this.DispatcherQueue.CreateTimer();
-                        timer2.Interval = TimeSpan.FromMilliseconds(1500);
-                        timer2.Tick += (s, e) =>
-                        {
-                            timer2.Stop();
-                            HideSystemTitleBarButtons();
-                        };
-                        timer2.Start();
-                    }
-                    catch { }
 
                     if (!_initialSizeApplied)
                     {
@@ -236,26 +201,59 @@ namespace BingPaper
                         }
                         catch { }
                         _initialSizeApplied = true;
+                    }
 
-                        // 设置窗口图标（unpackaged 模式需要手动用 Win32 设置任务栏/标题栏图标）
-                        try
+                    // 设置窗口图标（unpackaged 模式需要手动用 Win32 设置任务栏/标题栏图标）
+                    // 每次窗口激活时都尝试设置，确保图标正确显示
+                    try
+                    {
+                        var hwnd2 = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                        var exeDir = AppContext.BaseDirectory;
+                        var currentDir = Environment.CurrentDirectory;
+
+                        // 多路径查找 .ico 文件
+                        string[] icoPaths = [
+                            Path.Combine(exeDir, "Assets", "appicon.ico"),
+                            Path.Combine(exeDir, "appicon.ico"),
+                            Path.Combine(currentDir, "Assets", "appicon.ico"),
+                            Path.Combine(currentDir, "appicon.ico"),
+                        ];
+
+                        string? foundIco = null;
+                        foreach (var p in icoPaths)
                         {
-                            var hwnd2 = WinRT.Interop.WindowNative.GetWindowHandle(this);
-                            var exeDir = AppContext.BaseDirectory;
-                            var icoPath = Path.Combine(exeDir, "Assets", "appicon.ico");
-                            if (!File.Exists(icoPath)) icoPath = Path.Combine(exeDir, "appicon.ico");
-                            if (File.Exists(icoPath))
+                            if (File.Exists(p)) { foundIco = p; break; }
+                        }
+
+                        if (foundIco != null)
+                        {
+                            var hIcon = LoadImage(IntPtr.Zero, foundIco, 1, 0, 0, 0x00000050); // LR_LOADFROMFILE | LR_DEFAULTSIZE
+                            if (hIcon != IntPtr.Zero)
                             {
-                                var hIcon = LoadImage(IntPtr.Zero, icoPath, 1, 0, 0, 0x00000010);
-                                if (hIcon != IntPtr.Zero)
+                                SendMessage(hwnd2, 0x0080, (IntPtr)1, hIcon); // ICON_BIG
+                                SendMessage(hwnd2, 0x0080, (IntPtr)0, hIcon); // ICON_SMALL
+                            }
+                            else
+                            {
+                                // Fallback: 尝试从 PNG 加载
+                                foreach (var p in icoPaths)
                                 {
-                                    SendMessage(hwnd2, 0x0080, (IntPtr)1, hIcon); // ICON_BIG
-                                    SendMessage(hwnd2, 0x0080, (IntPtr)0, hIcon); // ICON_SMALL
+                                    var pngPath = p.Replace(".ico", ".png");
+                                    if (File.Exists(pngPath))
+                                    {
+                                        hIcon = LoadImage(IntPtr.Zero, pngPath, 1, 0, 0, 0x00000050);
+                                        if (hIcon != IntPtr.Zero)
+                                        {
+                                            SendMessage(hwnd2, 0x0080, (IntPtr)1, hIcon);
+                                            SendMessage(hwnd2, 0x0080, (IntPtr)0, hIcon);
+                                            break;
+                                        }
+                                    }
                                 }
                             }
                         }
-                        catch { }
                     }
+                    catch { }
                 }
                 catch { }
             };
@@ -1814,24 +1812,6 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
         private const uint SWP_NOMOVE = 0x0002;
         private const uint SWP_NOZORDER = 0x0004;
         private const uint SWP_NOACTIVATE = 0x0010;
-        private const uint SWP_FRAMECHANGED = 0x0020;
-
-        private const int GWL_STYLE = -16;
-        private const long WS_SYSMENU = 0x00080000L;
-        private const long WS_MINIMIZEBOX = 0x00020000L;
-        private const long WS_MAXIMIZEBOX = 0x00010000L;
-
-        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr", SetLastError = true)]
-        private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr", SetLastError = true)]
-        private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-
-        [DllImport("user32.dll", EntryPoint = "GetWindowLong", SetLastError = true)]
-        private static extern int GetWindowLong32(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowLong", SetLastError = true)]
-        private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
 
         [DllImport("user32.dll")]
         private static extern bool GetWindowPlacement(IntPtr hWnd, ref WINDOWPLACEMENT lpwndpl);
@@ -1896,39 +1876,6 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                     try { titleBar.InactiveForegroundColor = null; } catch { }
                     try { titleBar.InactiveBackgroundColor = null; } catch { }
                 }
-            }
-            catch { }
-        }
-
-        /// <summary>
-        /// 隐藏系统标题栏的 Win32 按钮（最小化/最大化/关闭）。
-        /// 方法一：移除 WS_SYSMENU/WS_MINIMIZEBOX/WS_MAXIMIZEBOX 样式位。
-        /// 方法二：设置 DWMWA_NCRENDERING_POLICY = DWMNCRP_DISABLED 禁用 DWM 对非客户区的渲染。
-        /// 两层保障确保 Win32 按钮不会出现。
-        /// </summary>
-        private void HideSystemTitleBarButtons()
-        {
-            try
-            {
-                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-
-                // 方法一：移除窗口样式位，去掉系统菜单/最小化/最大化按钮
-                var style = (uint)(long)GetWindowLongPtr64(hwnd, GWL_STYLE);
-                style = style & ~(uint)WS_SYSMENU & ~(uint)WS_MINIMIZEBOX & ~(uint)WS_MAXIMIZEBOX;
-                SetWindowLongPtr64(hwnd, GWL_STYLE, (IntPtr)(long)style);
-
-                // 方法二：禁用 DWM 非客户区渲染，阻止 DWM 绘制标题栏 Win32 按钮
-                // DWMNCRP_DISABLED = 1：由窗口自己负责非客户区（WinUI3 通过 ExtendsContentIntoTitleBar 处理）
-                try
-                {
-                    var ncrp = 1; // DWMNCRP_DISABLED
-                    DwmSetWindowAttribute(hwnd, 2 /* DWMWA_NCRENDERING_POLICY */, ref ncrp, sizeof(int));
-                }
-                catch { }
-
-                // 刷新窗口框架使所有变更生效
-                SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
-                    SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
             }
             catch { }
         }
@@ -2033,15 +1980,8 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
 
                 if (string.Equals(backdropType, "Mica", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Mica：使用 MicaBackdrop（Win11 云母效果）+ DWM 扩展帧增强透色
+                    // Mica：使用 MicaBackdrop（Win11 云母效果），WinUI3 自行处理 DWM 扩展
                     backdrop = new MicaBackdrop();
-                    // 扩展帧到客户区以增强 Mica 的透色效果
-                    try
-                    {
-                        var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
-                        DwmExtendFrameIntoClientArea(hwnd, ref margins);
-                    }
-                    catch { }
                 }
                 else if (string.Equals(backdropType, "Acrylic", StringComparison.OrdinalIgnoreCase))
                 {
@@ -2143,8 +2083,7 @@ private string? SaveImageToWallpaper(Microsoft.UI.Xaml.Controls.Image image, str
                 }
                 catch { }
 
-                // 3. 重新隐藏系统标题栏按钮（DwmExtendFrameIntoClientArea 可能触发 DWM 重绘非客户区）
-                HideSystemTitleBarButtons();
+                // 3. WinUI3 的 ExtendsContentIntoTitleBar 已自动处理标题栏按钮，无需额外操作
             }
             catch { }
         }
