@@ -1090,12 +1090,21 @@ namespace BingPaper
                         var res = _config.ContainsKey("default_resolution") ? _config["default_resolution"] : "UHD";
                         var suffix = res == "720" || res.Equals("720p", StringComparison.OrdinalIgnoreCase) ? "_1280x720.jpg" : res == "1080" ? "_1920x1080.jpg" : "_UHD.jpg";
                         var full = "https://www.bing.com" + urlBase + suffix;
-                        var img = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(full));
-                        var mainImg = root?.FindName("MainImage") as Microsoft.UI.Xaml.Controls.Image;
-                        if (mainImg != null) mainImg.Source = img;
 
-                        var titleBlock = root?.FindName("ImageTitle") as TextBlock;
-                        if (titleBlock != null) titleBlock.Text = title ?? string.Empty;
+                        // 必须在 UI 线程上设置 Image.Source 和 TextBlock.Text
+                        _ = this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+                        {
+                            try
+                            {
+                                var img = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(full));
+                                var mainImg = root?.FindName("MainImage") as Microsoft.UI.Xaml.Controls.Image;
+                                if (mainImg != null) mainImg.Source = img;
+
+                                var titleBlock = root?.FindName("ImageTitle") as TextBlock;
+                                if (titleBlock != null) titleBlock.Text = title ?? string.Empty;
+                            }
+                            catch { }
+                        });
 
                         // update selector (select BUHD by default)
                                 _ = this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
