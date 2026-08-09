@@ -2667,7 +2667,7 @@ private async Task<string?> SaveImageToWallpaperAsync(Microsoft.UI.Xaml.Controls
 
                                 try
                                 {
-                                    bool setOk = App.SetDesktopWallpaper(dest);
+                                    bool setOk = await App.SetDesktopWallpaperAsync(dest);
                                     if (status != null) status.Text = $"已下载 {downloaded} 张，失败 {errors} 张。设置壁纸: {(setOk ? "成功" : "失败")}. 文件: {dest}";
                                 }
                                 catch (Exception ex) { LogException(ex); if (status != null) status.Text = $"已下载 {downloaded} 张，失败 {errors} 张。尝试设置壁纸时出错: " + ex.Message; }

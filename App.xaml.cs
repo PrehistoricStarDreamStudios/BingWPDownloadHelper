@@ -133,7 +133,7 @@ namespace BingPaper
         [StructLayout(LayoutKind.Sequential)]
         private struct RECT { public int left; public int top; public int right; public int bottom; }
 
-        public static bool SetDesktopWallpaper(string imagePath)
+        public static async System.Threading.Tasks.Task<bool> SetDesktopWallpaperAsync(string imagePath)
         {
             var logPath = Path.Combine(Path.GetTempPath(), "BingPaper_wallpaper.log");
             void Log(string m)
@@ -157,7 +157,7 @@ namespace BingPaper
                         Log("Downloading URL: " + imagePath);
                         using (var http = new System.Net.Http.HttpClient())
                         {
-                            var bytes = http.GetByteArrayAsync(imagePath).GetAwaiter().GetResult();
+                            var bytes = await http.GetByteArrayAsync(imagePath);
                             var ext = Path.GetExtension(new Uri(imagePath).AbsolutePath);
                             if (string.IsNullOrEmpty(ext)) ext = ".jpg";
                             var tmp = Path.Combine(Path.GetTempPath(), "BingPaper_" + Guid.NewGuid().ToString() + ext);
