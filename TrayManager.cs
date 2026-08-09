@@ -1,22 +1,27 @@
 using System;
 using System.Runtime.InteropServices;
-using H.NotifyIcon.Core;
 using Microsoft.UI.Xaml;
 
 namespace BingPaper
 {
     /// <summary>
     /// 管理系统托盘图标、右键菜单与窗口显示/隐藏行为。
-    /// 基于 H.NotifyIcon.Core.TrayIcon 直接操作 Win32 托盘图标，
-    /// 避免 BitmapImage 异步加载导致图标空白的问题。
+    /// 直接使用 Win32 Shell_NotifyIcon API，避免 H.NotifyIcon.Core 的 API 兼容问题。
     /// </summary>
     public sealed class TrayManager : IDisposable
     {
         private readonly Window _window;
         private IntPtr _windowHandle = IntPtr.Zero;
-        private TrayIcon? _trayIcon;
+        private bool _iconAdded;
         private IntPtr _hMenu = IntPtr.Zero;
         private bool _disposed;
+        private uint _callbackMessage;
+        private IntPtr _hIcon = IntPtr.Zero;
+
+        // 窗口子类化回调
+        private SUBCLASSPROC? _subclassProc;
+        private IntPtr _subclassProcPtr = IntPtr.Zero;
+        private const uint SUBCLASS_ID = 1001;
 
         // 菜单项命令 ID
         private const int CMD_SHOW = 1;
@@ -35,63 +40,99 @@ namespace BingPaper
         {
             try
             {
-                // 获取主窗口句柄
-                try
-                {
-                    _windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(_window);
-                }
-                catch { }
-
-                // 1. 加载 .ico 文件为 HICON
-                var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "appicon.ico");
-                if (!System.IO.File.Exists(iconPath))
-                    iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "appicon.ico");
-                var hIcon = IntPtr.Zero;
-                if (System.IO.File.Exists(iconPath))
-                {
-                    hIcon = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
-                }
-
-                // 2. 创建 TrayIcon
-                _trayIcon = new TrayIcon(new IconData
-                {
-                    hIcon = hIcon,
-                    hCallback = IntPtr.Zero,
-                    uCallbackMessage = 0,
-                    uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE,
-                    szTip = Strings.GetString("TrayTooltip") ?? "Bing Wallpaper",
-                    dwState = 0,
-                    dwStateMask = 0,
-                    uVersion = 0,
-                });
-
-                _trayIcon.LeftClick += OnLeftClick;
-                _trayIcon.RightClick += OnRightClick;
-
-                _trayIcon.Create();
+                _windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(_window);
             }
             catch { }
-        }
 
-        private void OnLeftClick(object? sender, EventArgs e)
-        {
-            try
+            if (_windowHandle == IntPtr.Zero)
+                return;
+
+            // 注册唯一回调消息
+            _callbackMessage = RegisterWindowMessage("BingPaper_TrayCallback_" + Guid.NewGuid().ToString("N"));
+
+            // 加载 .ico 图标
+            var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "appicon.ico");
+            if (!System.IO.File.Exists(iconPath))
+                iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "appicon.ico");
+            if (System.IO.File.Exists(iconPath))
             {
-                ShowRequested?.Invoke(this, EventArgs.Empty);
+                _hIcon = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
             }
-            catch { }
+
+            // 子类化窗口以接收托盘回调消息
+            _subclassProc = WndProc;
+            _subclassProcPtr = Marshal.GetFunctionPointerForDelegate(_subclassProc);
+            SetWindowSubclass(_windowHandle, _subclassProc, SUBCLASS_ID, 0);
+
+            // 创建托盘图标
+            AddIcon();
         }
 
-        private void OnRightClick(object? sender, EventArgs e)
+        private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam, uint uIdSubclass, uint dwRefData)
         {
-            try
+            if (msg == _callbackMessage)
             {
-                ShowContextMenu();
+                switch ((int)lParam)
+                {
+                    case WM_LBUTTONUP:
+                        ShowRequested?.Invoke(this, EventArgs.Empty);
+                        return IntPtr.Zero;
+                    case WM_RBUTTONUP:
+                        ShowContextMenu();
+                        return IntPtr.Zero;
+                }
             }
-            catch { }
+            else if (msg == WM_DESTROY)
+            {
+                RemoveIcon();
+            }
+            return DefSubclassProc(hWnd, msg, wParam, lParam);
         }
 
-        private void ShowContextMenu()
+        private void AddIcon()
+        {
+            if (_iconAdded || _windowHandle == IntPtr.Zero)
+                return;
+
+            var nid = new NOTIFYICONDATA
+            {
+                cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATA>(),
+                hWnd = _windowHandle,
+                uID = 0,
+                uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE,
+                hIcon = _hIcon,
+                uCallbackMessage = _callbackMessage,
+                szTip = (GetString("TrayTooltip") ?? "Bing Wallpaper"),
+            };
+            if (nid.szTip.Length > 127)
+                nid.szTip = nid.szTip[..127];
+
+            _iconAdded = Shell_NotifyIcon(NIM_ADD, ref nid);
+
+            // 如果失败，尝试 V2 结构体大小
+            if (!_iconAdded)
+            {
+                nid.cbSize = NOTIFYICONDATA_V2_SIZE;
+                _iconAdded = Shell_NotifyIcon(NIM_ADD, ref nid);
+            }
+        }
+
+        private void RemoveIcon()
+        {
+            if (!_iconAdded || _windowHandle == IntPtr.Zero)
+                return;
+
+            var nid = new NOTIFYICONDATA
+            {
+                cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATA>(),
+                hWnd = _windowHandle,
+                uID = 0,
+            };
+            Shell_NotifyIcon(NIM_DELETE, ref nid);
+            _iconAdded = false;
+        }
+
+        public void ShowContextMenu()
         {
             try
             {
@@ -103,85 +144,80 @@ namespace BingPaper
 
                 _hMenu = CreatePopupMenu();
 
-                var showText = Strings.GetString("TrayShow");
-                AppendMenu(_hMenu, MF_STRING, CMD_SHOW, showText);
+                AppendMenu(_hMenu, MF_STRING, CMD_SHOW, GetString("TrayShow") ?? "Show");
                 AppendMenu(_hMenu, MF_SEPARATOR, 0, null);
-                var exitText = Strings.GetString("TrayExit");
-                AppendMenu(_hMenu, MF_STRING, CMD_EXIT, exitText);
+                AppendMenu(_hMenu, MF_STRING, CMD_EXIT, GetString("TrayExit") ?? "Exit");
 
-                // 获取当前鼠标位置
                 GetCursorPos(out POINT pt);
 
-                // 设置菜单为前景（支持键盘导航）
                 if (_windowHandle != IntPtr.Zero)
                     SetForegroundWindow(_windowHandle);
 
-                // 显示弹出菜单
-                var cmd = TrackPopupMenu(_hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_BOTTOMALIGN, pt.X, pt.Y, 0, _windowHandle != IntPtr.Zero ? _windowHandle : GetShellWindow(), IntPtr.Zero);
+                var cmd = TrackPopupMenu(_hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_BOTTOMALIGN,
+                    pt.X, pt.Y, 0, _windowHandle, IntPtr.Zero);
 
                 if (cmd == CMD_SHOW)
-                {
                     ShowRequested?.Invoke(this, EventArgs.Empty);
-                }
                 else if (cmd == CMD_EXIT)
-                {
                     ExitRequested?.Invoke(this, EventArgs.Empty);
-                }
             }
             catch { }
         }
 
         public void Show()
         {
-            try { _trayIcon?.Create(); } catch { }
+            AddIcon();
         }
 
         public void HideToTray()
         {
-            try { _window.Hide(); } catch { }
+            if (_windowHandle != IntPtr.Zero)
+                ShowWindow(_windowHandle, SW_HIDE);
         }
 
         public void ShowFromTray()
         {
-            try
+            if (_windowHandle != IntPtr.Zero)
             {
-                _window.Show();
-                _window.Activate();
-                try
-                {
-                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(_window);
-                    ShowWindow(hwnd, SW_RESTORE);
-                    SetForegroundWindow(hwnd);
-                }
-                catch { }
+                ShowWindow(_windowHandle, SW_SHOW);
+                ShowWindow(_windowHandle, SW_RESTORE);
+                SetForegroundWindow(_windowHandle);
             }
-            catch { }
         }
 
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
-            try
+
+            RemoveIcon();
+
+            if (_hMenu != IntPtr.Zero)
             {
-                if (_trayIcon != null)
-                {
-                    _trayIcon.LeftClick -= OnLeftClick;
-                    _trayIcon.RightClick -= OnRightClick;
-                    _trayIcon.Dispose();
-                    _trayIcon = null;
-                }
+                DestroyMenu(_hMenu);
+                _hMenu = IntPtr.Zero;
             }
-            catch { }
-            try
+
+            if (_hIcon != IntPtr.Zero)
             {
-                if (_hMenu != IntPtr.Zero)
-                {
-                    DestroyMenu(_hMenu);
-                    _hMenu = IntPtr.Zero;
-                }
+                DestroyIcon(_hIcon);
+                _hIcon = IntPtr.Zero;
             }
-            catch { }
+
+            if (_subclassProcPtr != IntPtr.Zero && _windowHandle != IntPtr.Zero)
+            {
+                try
+                {
+                    RemoveWindowSubclass(_windowHandle, _subclassProc, SUBCLASS_ID);
+                }
+                catch { }
+            }
+        }
+
+        private static string? GetString(string key)
+        {
+            try { return Strings.GetString(key); }
+            catch { return null; }
         }
 
         #region Win32 P/Invoke
@@ -189,15 +225,59 @@ namespace BingPaper
         private const int IMAGE_ICON = 1;
         private const uint LR_LOADFROMFILE = 0x00000010;
         private const uint LR_DEFAULTSIZE = 0x00000040;
+
         private const uint NIF_ICON = 0x00000002;
         private const uint NIF_TIP = 0x00000004;
         private const uint NIF_MESSAGE = 0x00000001;
+
+        private const uint NIM_ADD = 0x00000000;
+        private const uint NIM_DELETE = 0x00000002;
+
         private const uint MF_STRING = 0x00000000;
         private const uint MF_SEPARATOR = 0x00000800;
         private const uint TPM_RETURNCMD = 0x00000100;
         private const uint TPM_LEFTALIGN = 0x00000000;
         private const uint TPM_BOTTOMALIGN = 0x00002000;
+
+        private const int SW_HIDE = 0;
+        private const int SW_SHOW = 5;
         private const int SW_RESTORE = 9;
+
+        private const int WM_LBUTTONUP = 0x0202;
+        private const int WM_RBUTTONUP = 0x0205;
+        private const int WM_DESTROY = 0x0002;
+
+        private const uint NOTIFYICONDATA_V2_SIZE = 904;
+
+        // Win10 下 Shell_NotifyIcon 使用的 NOTIFYICONDATAW 结构体
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct NOTIFYICONDATA
+        {
+            public uint cbSize;
+            public IntPtr hWnd;
+            public uint uID;
+            public uint uFlags;
+            public uint uCallbackMessage;
+            public IntPtr hIcon;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string szTip;
+            public uint dwState;
+            public uint dwStateMask;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+            public string szInfo;
+            public uint uVersion;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+            public string szInfoTitle;
+            public uint dwInfoFlags;
+            public Guid guidItem;
+            public IntPtr hBalloonIcon;
+        }
+
+        // 子类化回调委托
+        private delegate IntPtr SUBCLASSPROC(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, uint uIdSubclass, uint dwRefData);
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        private static extern bool Shell_NotifyIcon(uint dwMessage, ref NOTIFYICONDATA lpData);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern IntPtr LoadImage(IntPtr hInst, string name, int type, int cx, int cy, uint flags);
@@ -207,9 +287,6 @@ namespace BingPaper
 
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetShellWindow();
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr CreatePopupMenu();
@@ -225,6 +302,22 @@ namespace BingPaper
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern int TrackPopupMenu(IntPtr hMenu, uint flags, int x, int y, int nReserved, IntPtr hWnd, IntPtr prcRect);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool DestroyIcon(IntPtr hIcon);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern uint RegisterWindowMessage(string lpString);
+
+        // 窗口子类化（Comctl32.dll v6，WinUI3 已初始化）
+        [DllImport("comctl32.dll")]
+        private static extern bool SetWindowSubclass(IntPtr hWnd, SUBCLASSPROC pfnSubclass, uint uIdSubclass, uint dwRefData);
+
+        [DllImport("comctl32.dll")]
+        private static extern IntPtr DefSubclassProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("comctl32.dll")]
+        private static extern bool RemoveWindowSubclass(IntPtr hWnd, SUBCLASSPROC pfnSubclass, uint uIdSubclass);
 
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT
