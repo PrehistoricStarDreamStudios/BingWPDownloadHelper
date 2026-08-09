@@ -307,6 +307,9 @@ namespace BingPaper
         {
             try
             {
+                // 确保托盘图标已初始化（窗口句柄就绪后重试）
+                try { _trayManager?.EnsureInitialized(); } catch { }
+
                 // 导航到首页（今日壁纸）
                 NavView.SelectedItem = NavView.MenuItems[0] as NavigationViewItem;
                 // 自动更新列表

@@ -6,7 +6,7 @@ namespace BingPaper
 {
     /// <summary>
     /// 管理系统托盘图标、右键菜单与窗口显示/隐藏行为。
-    /// 使用 Win32 Shell_NotifyIcon API，通过正确的 Pack=4 结构体布局确保 x64 兼容。
+    /// 使用 Win32 Shell_NotifyIcon API，采用默认对齐（x64: 8字节）与 Win32 原生布局一致。
     /// </summary>
     public sealed class TrayManager : IDisposable
     {
@@ -153,6 +153,39 @@ namespace BingPaper
             _iconAdded = false;
         }
 
+        /// <summary>
+        /// 确保托盘图标已初始化。在窗口 Loaded 后调用，以防构造时窗口句柄尚未就绪。
+        /// </summary>
+        public void EnsureInitialized()
+        {
+            if (_windowHandle != IntPtr.Zero && _iconAdded)
+                return;
+
+            try
+            {
+                if (_windowHandle == IntPtr.Zero)
+                    _windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(_window);
+            }
+            catch { }
+
+            if (_windowHandle == IntPtr.Zero)
+                return;
+
+            if (_callbackMessage == 0)
+                _callbackMessage = RegisterWindowMessage("BingPaper_TrayCallback_" + Guid.NewGuid().ToString("N"));
+
+            if (_hIcon == IntPtr.Zero)
+                LoadAppIcon();
+
+            if (_subclassProc == null)
+            {
+                _subclassProc = WndProc;
+                SetWindowSubclass(_windowHandle, _subclassProc, SUBCLASS_ID, 0);
+            }
+
+            AddIcon();
+        }
+
         public void ShowContextMenu()
         {
             try
@@ -235,8 +268,8 @@ namespace BingPaper
 
         #region Win32 Structs & P/Invoke
 
-        // NOTIFYICONDATAW 正确布局（Pack=4 确保与 Win32 API 一致）
-        [StructLayout(LayoutKind.Sequential, Pack = 4, CharSet = CharSet.Unicode)]
+        // NOTIFYICONDATAW 布局使用默认对齐（x64: 8字节），与 Win32 API 一致
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct NOTIFYICONDATAW
         {
             public int cbSize;
