@@ -132,16 +132,18 @@
 
   <!-- Tray icon -->
   <data name="TrayTooltip" xml:space="preserve"><value>Bing Wallpaper Downloader</value></data>
-  <data name="TrayShow" xml:space="preserve"><value>Show window</value></data>
-  <data name="TrayExit" xml:space="preserve"><value>Exit</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>Show App</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Close App</value></data>
 
   <!-- Fluent Design ToggleSwitch keys (boolean toggles migrated from CheckBox) -->
   <data name="AutoStartChk.Header" xml:space="preserve"><value>Start with Windows</value></data>
   <data name="AutoStartChk.OnContent" xml:space="preserve"><value>On</value></data>
   <data name="AutoStartChk.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="AutoStartChk.Text" xml:space="preserve"><value>Start with Windows</value></data>
   <data name="AutoUpdateListChk.Header" xml:space="preserve"><value>Auto-update list (daily from GitHub)</value></data>
   <data name="AutoUpdateListChk.OnContent" xml:space="preserve"><value>On</value></data>
   <data name="AutoUpdateListChk.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="AutoUpdateListChk.Text" xml:space="preserve"><value>Auto-update list</value></data>
   <data name="DownloadHistoryChk.Header" xml:space="preserve"><value>Download history</value></data>
   <data name="DownloadHistoryChk.OnContent" xml:space="preserve"><value>On</value></data>
   <data name="DownloadHistoryChk.OffContent" xml:space="preserve"><value>Off</value></data>

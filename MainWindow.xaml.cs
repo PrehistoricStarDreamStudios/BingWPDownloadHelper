@@ -443,8 +443,8 @@ namespace BingPaper
                 if (ToggleIcon != null)
                 {
                     var isDark = this.AppTitleBar?.ActualTheme == ElementTheme.Dark;
-                    // 深色模式显示太阳(切到浅色)，浅色模式显示月亮(切到深色)
-                    ToggleIcon.Glyph = isDark ? "\uE706;" : "\uE706;";
+                    // 深色模式显示太阳（点击切到浅色），浅色模式显示月亮（点击切到深色）
+                    ToggleIcon.Glyph = isDark ? "\uE793" : "\uE706";
                 }
             }
             catch { }

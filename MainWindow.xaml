@@ -65,7 +65,7 @@
                     <FontIcon x:Name="ToggleIcon" Glyph="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
                 </Button>
                 <!-- 预留系统 caption 按钮空间（最小化/最大化/关闭 约 138px） -->
-                <Rectangle Width="138" />
+                <Grid Width="138" />
             </StackPanel>
         </Grid>
 

@@ -132,16 +132,18 @@
 
   <!-- 托盘图标 -->
   <data name="TrayTooltip" xml:space="preserve"><value>必应壁纸下载器</value></data>
-  <data name="TrayShow" xml:space="preserve"><value>显示窗口</value></data>
-  <data name="TrayExit" xml:space="preserve"><value>退出</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>显示软件</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>关闭软件</value></data>
 
   <!-- Fluent Design ToggleSwitch keys（布尔开关由 CheckBox 改为 ToggleSwitch） -->
   <data name="AutoStartChk.Header" xml:space="preserve"><value>开机自启</value></data>
   <data name="AutoStartChk.OnContent" xml:space="preserve"><value>开启</value></data>
   <data name="AutoStartChk.OffContent" xml:space="preserve"><value>关闭</value></data>
+  <data name="AutoStartChk.Text" xml:space="preserve"><value>开机自启</value></data>
   <data name="AutoUpdateListChk.Header" xml:space="preserve"><value>自动更新列表（每日从 GitHub 拉取并补充未分类壁纸）</value></data>
   <data name="AutoUpdateListChk.OnContent" xml:space="preserve"><value>开启</value></data>
   <data name="AutoUpdateListChk.OffContent" xml:space="preserve"><value>关闭</value></data>
+  <data name="AutoUpdateListChk.Text" xml:space="preserve"><value>自动更新列表</value></data>
   <data name="DownloadHistoryChk.Header" xml:space="preserve"><value>下载历史壁纸</value></data>
   <data name="DownloadHistoryChk.OnContent" xml:space="preserve"><value>开启</value></data>
   <data name="DownloadHistoryChk.OffContent" xml:space="preserve"><value>关闭</value></data>

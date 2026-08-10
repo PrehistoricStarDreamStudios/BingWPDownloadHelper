@@ -132,16 +132,18 @@
 
   <!-- 系統匣圖示 -->
   <data name="TrayTooltip" xml:space="preserve"><value>必應桌面布景主題下載器</value></data>
-  <data name="TrayShow" xml:space="preserve"><value>顯示視窗</value></data>
-  <data name="TrayExit" xml:space="preserve"><value>結束</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>顯示軟件</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>關閉軟件</value></data>
 
   <!-- Fluent Design ToggleSwitch keys（布林開關由 CheckBox 改為 ToggleSwitch） -->
   <data name="AutoStartChk.Header" xml:space="preserve"><value>開機自動啟動</value></data>
   <data name="AutoStartChk.OnContent" xml:space="preserve"><value>開啟</value></data>
   <data name="AutoStartChk.OffContent" xml:space="preserve"><value>關閉</value></data>
+  <data name="AutoStartChk.Text" xml:space="preserve"><value>開機自動啟動</value></data>
   <data name="AutoUpdateListChk.Header" xml:space="preserve"><value>自動更新列表（每日從 GitHub 拉取並補充未分類桌布）</value></data>
   <data name="AutoUpdateListChk.OnContent" xml:space="preserve"><value>開啟</value></data>
   <data name="AutoUpdateListChk.OffContent" xml:space="preserve"><value>關閉</value></data>
+  <data name="AutoUpdateListChk.Text" xml:space="preserve"><value>自動更新列表</value></data>
   <data name="DownloadHistoryChk.Header" xml:space="preserve"><value>下載歷史桌布</value></data>
   <data name="DownloadHistoryChk.OnContent" xml:space="preserve"><value>開啟</value></data>
   <data name="DownloadHistoryChk.OffContent" xml:space="preserve"><value>關閉</value></data>
