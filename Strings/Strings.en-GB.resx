@@ -64,8 +64,8 @@
   <data name="SettingsExitApp" xml:space="preserve"><value>Close application</value></data>
   <data name="SettingsAskExitConfirm" xml:space="preserve"><value>Ask before closing</value></data>
 
-  <data name="TrayShow" xml:space="preserve"><value>Show window</value></data>
-  <data name="TrayExit" xml:space="preserve"><value>Exit</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>Show App</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Close App</value></data>
   <data name="TrayTooltip" xml:space="preserve"><value>Bing Wallpaper</value></data>
 
   <data name="DownloadThreads" xml:space="preserve"><value>Download threads</value></data>

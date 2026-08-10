@@ -1,19 +1,20 @@
 using System;
 using System.Runtime.InteropServices;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace BingPaper
 {
     /// <summary>
-    /// 管理系统托盘图标、右键菜单与窗口显示/隐藏行为。
-    /// 使用 Win32 Shell_NotifyIcon API，采用默认对齐（x64: 8字节）与 Win32 原生布局一致。
+    /// 管理系统托盘图标、右键菜单（WinUI3 MenuFlyout）与窗口显示/隐藏行为。
+    /// 托盘图标使用 Win32 Shell_NotifyIcon API，右键菜单使用 WinUI3 原生 MenuFlyout。
     /// </summary>
     public sealed class TrayManager : IDisposable
     {
         private readonly Window _window;
         private IntPtr _windowHandle = IntPtr.Zero;
         private bool _iconAdded;
-        private IntPtr _hMenu = IntPtr.Zero;
         private bool _disposed;
         private uint _callbackMessage;
         private IntPtr _hIcon = IntPtr.Zero;
@@ -21,8 +22,7 @@ namespace BingPaper
         private SUBCLASSPROC? _subclassProc;
         private const uint SUBCLASS_ID = 1001;
 
-        private const int CMD_SHOW = 1;
-        private const int CMD_EXIT = 2;
+        private MenuFlyout? _menuFlyout;
 
         public event EventHandler? ShowRequested;
         public event EventHandler? ExitRequested;
@@ -123,7 +123,6 @@ namespace BingPaper
                 uFlags = (int)(NIF_ICON | NIF_TIP | NIF_MESSAGE),
                 uCallbackMessage = (int)_callbackMessage,
                 hIcon = _hIcon,
-                szTip = tip,
                 dwState = 0,
                 dwStateMask = 0,
                 szInfo = "",
@@ -186,34 +185,50 @@ namespace BingPaper
             AddIcon();
         }
 
+        /// <summary>
+        /// 显示 WinUI3 MenuFlyout 托盘右键菜单。
+        /// </summary>
         public void ShowContextMenu()
         {
             try
             {
-                if (_hMenu != IntPtr.Zero)
+                _window.DispatcherQueue.TryEnqueue(() =>
                 {
-                    DestroyMenu(_hMenu);
-                    _hMenu = IntPtr.Zero;
-                }
+                    try
+                    {
+                        GetCursorPos(out POINT pt);
 
-                _hMenu = CreatePopupMenu();
+                        if (_menuFlyout == null)
+                        {
+                            _menuFlyout = new MenuFlyout();
 
-                AppendMenu(_hMenu, MF_STRING, CMD_SHOW, GetString("TrayShow") ?? "Show");
-                AppendMenu(_hMenu, MF_SEPARATOR, 0, null);
-                AppendMenu(_hMenu, MF_STRING, CMD_EXIT, GetString("TrayExit") ?? "Exit");
+                            var showItem = new MenuFlyoutItem
+                            {
+                                Text = GetString("TrayShow") ?? "显示软件"
+                            };
+                            showItem.Click += (s, e) => ShowRequested?.Invoke(this, EventArgs.Empty);
+                            _menuFlyout.Items.Add(showItem);
 
-                GetCursorPos(out POINT pt);
+                            _menuFlyout.Items.Add(new MenuFlyoutSeparator());
 
-                if (_windowHandle != IntPtr.Zero)
-                    SetForegroundWindow(_windowHandle);
+                            var exitItem = new MenuFlyoutItem
+                            {
+                                Text = GetString("TrayExit") ?? "关闭软件"
+                            };
+                            exitItem.Click += (s, e) => ExitRequested?.Invoke(this, EventArgs.Empty);
+                            _menuFlyout.Items.Add(exitItem);
+                        }
 
-                var cmd = TrackPopupMenu(_hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_BOTTOMALIGN,
-                    pt.X, pt.Y, 0, _windowHandle, IntPtr.Zero);
+                        // 转换屏幕坐标到 DIP 并定位
+                        var dpi = GetDpiForWindow(_windowHandle);
+                        var scale = dpi / 96.0;
+                        var x = pt.X / scale;
+                        var y = pt.Y / scale;
 
-                if (cmd == CMD_SHOW)
-                    ShowRequested?.Invoke(this, EventArgs.Empty);
-                else if (cmd == CMD_EXIT)
-                    ExitRequested?.Invoke(this, EventArgs.Empty);
+                        _menuFlyout.ShowAt(_window.Content, new Windows.Foundation.Point(x, y));
+                    }
+                    catch { }
+                });
             }
             catch { }
         }
@@ -241,12 +256,6 @@ namespace BingPaper
 
             RemoveIcon();
 
-            if (_hMenu != IntPtr.Zero)
-            {
-                DestroyMenu(_hMenu);
-                _hMenu = IntPtr.Zero;
-            }
-
             if (_hIcon != IntPtr.Zero)
             {
                 DestroyIcon(_hIcon);
@@ -260,10 +269,10 @@ namespace BingPaper
             }
         }
 
-        private static string? GetString(string key)
+        private static string GetString(string key)
         {
             try { return Strings.GetString(key); }
-            catch { return null; }
+            catch { return key; }
         }
 
         #region Win32 Structs & P/Invoke
@@ -310,12 +319,6 @@ namespace BingPaper
         private const uint NIM_ADD = 0x00000000;
         private const uint NIM_DELETE = 0x00000002;
 
-        private const uint MF_STRING = 0x00000000;
-        private const uint MF_SEPARATOR = 0x00000800;
-        private const uint TPM_RETURNCMD = 0x00000100;
-        private const uint TPM_LEFTALIGN = 0x00000000;
-        private const uint TPM_BOTTOMALIGN = 0x00002000;
-
         private const int SW_HIDE = 0;
         private const int SW_SHOW = 5;
         private const int SW_RESTORE = 9;
@@ -342,19 +345,7 @@ namespace BingPaper
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
         [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr CreatePopupMenu();
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern bool AppendMenu(IntPtr hMenu, uint flags, int id, string? text);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool DestroyMenu(IntPtr hMenu);
-
-        [DllImport("user32.dll", SetLastError = true)]
         private static extern bool GetCursorPos(out POINT pt);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern int TrackPopupMenu(IntPtr hMenu, uint flags, int x, int y, int nReserved, IntPtr hWnd, IntPtr prcRect);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool DestroyIcon(IntPtr hIcon);
@@ -370,6 +361,9 @@ namespace BingPaper
 
         [DllImport("comctl32.dll")]
         private static extern bool RemoveWindowSubclass(IntPtr hWnd, SUBCLASSPROC pfnSubclass, uint uIdSubclass);
+
+        [DllImport("user32.dll")]
+        private static extern uint GetDpiForWindow(IntPtr hwnd);
 
         #endregion
     }

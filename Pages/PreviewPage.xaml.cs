@@ -65,9 +65,8 @@ namespace BingPaper.Pages
                                     tags.AddRange(tagText.Split(',', '，', ';').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)));
                             }
                             if (tags.Count == 0) tags.Add(UnclassifiedTag);
-                            // Deduplicate by URL
-                            if (!AppData.AllWallpapers.Any(w => w.url == url))
-                                AppData.AllWallpapers.Add((url, tags));
+                            if (!AppData.AllWallpapers.Any(w => w.Url == url))
+                                AppData.AllWallpapers.Add(new WallpaperItem { Url = url, Tags = tags });
                         }
                     }
                     catch { }
@@ -82,7 +81,7 @@ namespace BingPaper.Pages
             TagFilterCombo.Items.Add(new ComboBoxItem { Content = "全部", Tag = "__all__" });
             var allTags = new HashSet<string>();
             foreach (var wp in AppData.AllWallpapers)
-                foreach (var t in wp.tags)
+                foreach (var t in wp.Tags)
                     allTags.Add(t);
             foreach (var t in OfficialTags)
             {
@@ -105,7 +104,7 @@ namespace BingPaper.Pages
                 if (tag == "__all__")
                     AppData.FilteredWallpapers = AppData.AllWallpapers.ToList();
                 else
-                    AppData.FilteredWallpapers = AppData.AllWallpapers.Where(w => w.tags.Contains(tag)).ToList();
+                    AppData.FilteredWallpapers = AppData.AllWallpapers.Where(w => w.Tags.Contains(tag)).ToList();
                 FillPreviewGrid();
             }
             catch { }
@@ -126,13 +125,13 @@ namespace BingPaper.Pages
         {
             try
             {
-                if (args.Item is not (string url, List<string> tags)) return;
+                if (args.Item is not WallpaperItem item) return;
                 var img = args.ItemContainer.ContentTemplateRoot is Grid grid
                     ? grid.FindName("ItemImg") as Image
                     : null;
-                if (img != null)
+                if (img != null && !string.IsNullOrEmpty(item.Url))
                 {
-                    img.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(url));
+                    img.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(item.Url));
                 }
             }
             catch { }

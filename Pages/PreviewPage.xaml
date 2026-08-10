@@ -34,7 +34,7 @@
                             </Image.RenderTransform>
                         </Image>
                         <Border VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Background="#80000000" Padding="6,3">
-                            <TextBlock Text="{Binding Tags}" FontSize="11" Foreground="White" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding TagsDisplay}" FontSize="11" Foreground="White" TextTrimming="CharacterEllipsis" />
                         </Border>
                     </Grid>
                 </DataTemplate>

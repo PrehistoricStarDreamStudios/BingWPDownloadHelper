@@ -64,8 +64,8 @@
   <data name="SettingsExitApp" xml:space="preserve"><value>關閉軟體</value></data>
   <data name="SettingsAskExitConfirm" xml:space="preserve"><value>關閉軟體前詢問</value></data>
 
-  <data name="TrayShow" xml:space="preserve"><value>顯示視窗</value></data>
-  <data name="TrayExit" xml:space="preserve"><value>結束</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>顯示軟件</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>關閉軟件</value></data>
   <data name="TrayTooltip" xml:space="preserve"><value>Bing 桌布</value></data>
 
   <data name="DownloadThreads" xml:space="preserve"><value>下載執行緒數</value></data>

@@ -31,7 +31,7 @@ namespace BingPaper
             Instance = this;
             this.InitializeComponent();
 
-            // WinUI3 标准标题栏
+            // WinUI3 标准标题栏：将内容延伸到标题栏区域
             this.ExtendsContentIntoTitleBar = true;
 
             // 配置 OverlappedPresenter

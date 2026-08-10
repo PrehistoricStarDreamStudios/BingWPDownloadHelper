@@ -119,8 +119,8 @@
   <data name="PreviewPageTitle.Text" xml:space="preserve"><value>壁纸预览</value></data>
   <data name="TagFilterLabel.Text" xml:space="preserve"><value>标签筛选：</value></data>
 
-  <data name="TrayShow" xml:space="preserve"><value>显示窗口</value></data>
-  <data name="TrayExit" xml:space="preserve"><value>退出</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>显示软件</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>关闭软件</value></data>
   <data name="TrayTooltip" xml:space="preserve"><value>必应壁纸下载器</value></data>
   <data name="SettingsSavedRestartHint" xml:space="preserve"><value>已保存设置，部分更改将在重启后生效</value></data>
   <data name="MsgNeedRestartForLanguage" xml:space="preserve"><value>语言更改需重启应用才能完全生效</value></data>

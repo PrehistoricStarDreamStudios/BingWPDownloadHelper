@@ -119,8 +119,8 @@
   <data name="PreviewPageTitle.Text" xml:space="preserve"><value>Wallpaper Preview</value></data>
   <data name="TagFilterLabel.Text" xml:space="preserve"><value>Tag filter:</value></data>
 
-  <data name="TrayShow" xml:space="preserve"><value>Show</value></data>
-  <data name="TrayExit" xml:space="preserve"><value>Exit</value></data>
+  <data name="TrayShow" xml:space="preserve"><value>Show App</value></data>
+  <data name="TrayExit" xml:space="preserve"><value>Close App</value></data>
   <data name="TrayTooltip" xml:space="preserve"><value>Bing Wallpaper Downloader</value></data>
   <data name="SettingsSavedRestartHint" xml:space="preserve"><value>Settings saved. Some changes require restart.</value></data>
   <data name="MsgNeedRestartForLanguage" xml:space="preserve"><value>Language change requires restart to fully apply.</value></data>

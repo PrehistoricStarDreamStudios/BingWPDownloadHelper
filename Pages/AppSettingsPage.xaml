@@ -7,97 +7,232 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <Page.Resources>
+        <!-- Win11 设置卡片样式 -->
+        <Style x:Key="SettingsCard" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="SettingsHeaderText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,16,0,8" />
+        </Style>
+        <Style x:Key="SettingsDescription" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+    </Page.Resources>
+
     <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="16,8,16,16" Spacing="16">
+        <StackPanel Margin="32,8,32,32" MaxWidth="800">
 
-            <TextBlock x:Uid="AppSettingsPageTitle" FontSize="22" FontWeight="SemiBold" />
+            <!-- 页面标题 -->
+            <TextBlock x:Uid="AppSettingsPageTitle" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,20" />
 
-            <ToggleSwitch x:Name="AutoStartCheck" x:Uid="AutoStartChk" Toggled="AutoStartCheck_Toggled" />
+            <!-- 常规 -->
+            <TextBlock x:Uid="GeneralHeader" Style="{StaticResource SettingsHeaderText}" Text="常规" />
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="AutoStartChk" FontWeight="SemiBold" />
+                        <TextBlock x:Uid="AutoStartHint" Style="{StaticResource SettingsDescription}" Text="开机时自动启动本软件" />
+                    </StackPanel>
+                    <ToggleSwitch x:Name="AutoStartCheck" Grid.Column="1" Toggled="AutoStartCheck_Toggled" />
+                </Grid>
+            </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock x:Uid="CloseBehaviorLabel" VerticalAlignment="Center" />
-                <ComboBox x:Name="CloseBehaviorCombo" Width="180" SelectedIndex="0" SelectionChanged="CloseBehaviorCombo_SelectionChanged">
-                    <ComboBoxItem x:Uid="CloseTray" Tag="Tray" />
-                    <ComboBoxItem x:Uid="CloseExit" Tag="Exit" />
-                </ComboBox>
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="CloseBehaviorLabel" FontWeight="SemiBold" Text="关闭行为" />
+                        <TextBlock x:Uid="CloseBehaviorHint" Style="{StaticResource SettingsDescription}" Text="选择关闭窗口时的行为" />
+                    </StackPanel>
+                    <ComboBox x:Name="CloseBehaviorCombo" Grid.Column="1" Width="160" SelectedIndex="0" SelectionChanged="CloseBehaviorCombo_SelectionChanged">
+                        <ComboBoxItem x:Uid="CloseTray" Tag="Tray" />
+                        <ComboBoxItem x:Uid="CloseExit" Tag="Exit" />
+                    </ComboBox>
+                </Grid>
+            </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock x:Uid="ThemeModeLabel" VerticalAlignment="Center" />
-                <ComboBox x:Name="ThemeModeCombo" Width="140" SelectedIndex="0" SelectionChanged="ThemeMode_SelectionChanged">
-                    <ComboBoxItem x:Uid="ThemeSystem" Tag="System" />
-                    <ComboBoxItem x:Uid="ThemeLight" Tag="Light" />
-                    <ComboBoxItem x:Uid="ThemeDark" Tag="Dark" />
-                </ComboBox>
-                <TextBlock x:Uid="ColorThemeLabel" VerticalAlignment="Center" Margin="16,0,0,0" />
-                <ComboBox x:Name="ColorThemeCombo" Width="140" Margin="8,0,0,0" SelectedIndex="0" SelectionChanged="ColorTheme_SelectionChanged">
-                    <ComboBoxItem x:Uid="ColorSystem" Tag="System" />
-                    <ComboBoxItem x:Uid="ColorBlue" Tag="Blue" />
-                    <ComboBoxItem x:Uid="ColorGreen" Tag="Green" />
-                    <ComboBoxItem x:Uid="ColorOrange" Tag="Orange" />
-                    <ComboBoxItem x:Uid="ColorPurple" Tag="Purple" />
-                    <ComboBoxItem x:Uid="ColorPink" Tag="Pink" />
-                </ComboBox>
-            </StackPanel>
+            <!-- 外观 -->
+            <TextBlock x:Uid="AppearanceHeader" Style="{StaticResource SettingsHeaderText}" Text="外观" />
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="ThemeModeLabel" FontWeight="SemiBold" Text="主题模式" />
+                        <TextBlock x:Uid="ThemeModeHint" Style="{StaticResource SettingsDescription}" Text="选择应用主题" />
+                    </StackPanel>
+                    <ComboBox x:Name="ThemeModeCombo" Grid.Column="1" Width="140" SelectedIndex="0" SelectionChanged="ThemeMode_SelectionChanged">
+                        <ComboBoxItem x:Uid="ThemeSystem" Tag="System" />
+                        <ComboBoxItem x:Uid="ThemeLight" Tag="Light" />
+                        <ComboBoxItem x:Uid="ThemeDark" Tag="Dark" />
+                    </ComboBox>
+                </Grid>
+            </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock x:Uid="DownloadThreadsLabel" VerticalAlignment="Center" />
-                <NumberBox x:Name="DownloadThreadsBox" Minimum="1" Maximum="32" Value="4" Width="100" />
-                <TextBlock x:Uid="DownloadThreadsHint" VerticalAlignment="Center"
-                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" />
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="ColorThemeLabel" FontWeight="SemiBold" Text="颜色主题" />
+                        <TextBlock x:Uid="ColorThemeHint" Style="{StaticResource SettingsDescription}" Text="选择应用强调色" />
+                    </StackPanel>
+                    <ComboBox x:Name="ColorThemeCombo" Grid.Column="1" Width="140" SelectedIndex="0" SelectionChanged="ColorTheme_SelectionChanged">
+                        <ComboBoxItem x:Uid="ColorSystem" Tag="System" />
+                        <ComboBoxItem x:Uid="ColorBlue" Tag="Blue" />
+                        <ComboBoxItem x:Uid="ColorGreen" Tag="Green" />
+                        <ComboBoxItem x:Uid="ColorOrange" Tag="Orange" />
+                        <ComboBoxItem x:Uid="ColorPurple" Tag="Purple" />
+                        <ComboBoxItem x:Uid="ColorPink" Tag="Pink" />
+                    </ComboBox>
+                </Grid>
+            </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock x:Uid="LanguageLabel" VerticalAlignment="Center" />
-                <ComboBox x:Name="LanguageCombo" Width="220" SelectedIndex="0" SelectionChanged="LanguageCombo_SelectionChanged">
-                    <ComboBoxItem x:Uid="LangZhCN" Tag="zh-CN" />
-                    <ComboBoxItem x:Uid="LangZhHK" Tag="zh-HK" />
-                    <ComboBoxItem x:Uid="LangZhTW" Tag="zh-TW" />
-                    <ComboBoxItem x:Uid="LangEnUS" Tag="en-US" />
-                    <ComboBoxItem x:Uid="LangEnGB" Tag="en-GB" />
-                </ComboBox>
-                <TextBlock x:Name="LanguageRestartHint" Text="" VerticalAlignment="Center" Foreground="Orange" FontSize="12" Visibility="Collapsed" />
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="BackdropTypeLabel" FontWeight="SemiBold" Text="背景材质" />
+                        <TextBlock x:Uid="BackdropHint" Style="{StaticResource SettingsDescription}" Text="选择窗口背景效果" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                        <ComboBox x:Name="BackdropTypeCombo" Width="160" SelectedIndex="0" SelectionChanged="BackdropType_SelectionChanged">
+                            <ComboBoxItem x:Uid="BackdropMica" Tag="Mica" />
+                            <ComboBoxItem x:Uid="BackdropAcrylic" Tag="Acrylic" />
+                            <ComboBoxItem Content="Aero" Tag="Aero" />
+                            <ComboBoxItem Content="LiquidGlass" Tag="LiquidGlass" />
+                            <ComboBoxItem x:Uid="BackdropNone" Tag="None" />
+                        </ComboBox>
+                        <ToggleSwitch x:Name="TransparentBackgroundSwitch" x:Uid="TransparentBackgroundChk" Toggled="TransparentBackground_Toggled" />
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock x:Uid="BackdropTypeLabel" VerticalAlignment="Center" />
-                <ComboBox x:Name="BackdropTypeCombo" Width="200" SelectedIndex="0" SelectionChanged="BackdropType_SelectionChanged">
-                    <ComboBoxItem x:Uid="BackdropMica" Tag="Mica" />
-                    <ComboBoxItem x:Uid="BackdropAcrylic" Tag="Acrylic" />
-                    <ComboBoxItem Content="Aero" Tag="Aero" />
-                    <ComboBoxItem Content="LiquidGlass" Tag="LiquidGlass" />
-                    <ComboBoxItem x:Uid="BackdropNone" Tag="None" />
-                </ComboBox>
-                <ToggleSwitch x:Name="TransparentBackgroundSwitch" x:Uid="TransparentBackgroundChk" Margin="16,0,0,0" Toggled="TransparentBackground_Toggled" />
-            </StackPanel>
+            <!-- 下载 -->
+            <TextBlock x:Uid="DownloadHeader" Style="{StaticResource SettingsHeaderText}" Text="下载" />
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="DownloadThreadsLabel" FontWeight="SemiBold" Text="下载线程数" />
+                        <TextBlock x:Uid="DownloadThreadsHint" Style="{StaticResource SettingsDescription}" Text="1-32，默认 4" />
+                    </StackPanel>
+                    <NumberBox x:Name="DownloadThreadsBox" Grid.Column="1" Minimum="1" Maximum="32" Value="4" Width="100" />
+                </Grid>
+            </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <ToggleSwitch x:Name="AutoUpdateListCheck" x:Uid="AutoUpdateListChk" IsOn="True" />
-                <Button x:Name="CheckUpdateNowBtn" x:Uid="CheckUpdateNowBtn" Padding="12,5" Click="CheckUpdateNow_Click" />
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="ApiSourceLabel" FontWeight="SemiBold" Text="API 来源" />
+                        <TextBlock x:Uid="ApiSourceHint" Style="{StaticResource SettingsDescription}" Text="选择壁纸数据来源" />
+                    </StackPanel>
+                    <ComboBox x:Name="ApiSourceCombo" Grid.Column="1" Width="220" SelectedIndex="0">
+                        <ComboBoxItem x:Uid="ApiBing" />
+                        <ComboBoxItem Content="----" IsEnabled="False" />
+                        <ComboBoxItem Content="----" IsEnabled="False" />
+                    </ComboBox>
+                </Grid>
+            </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock x:Uid="DefaultListLabel" VerticalAlignment="Center" />
-                <ComboBox x:Name="DefaultListCombo" Width="320" SelectedIndex="0">
-                    <ComboBoxItem x:Uid="ListLocal" Tag="local" />
-                    <ComboBoxItem Content="sdnet.page.gd" Tag="sdnet.page.gd" IsEnabled="False" />
-                    <ComboBoxItem Content="worldno1steve.github.io" Tag="worldno1steve.github.io" IsEnabled="False" />
-                    <ComboBoxItem Content="sdnet.pages.dev" Tag="sdnet.pages.dev" IsEnabled="False" />
-                </ComboBox>
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="DefaultListLabel" FontWeight="SemiBold" Text="默认列表" />
+                        <TextBlock x:Uid="DefaultListHint" Style="{StaticResource SettingsDescription}" Text="选择默认壁纸列表来源" />
+                    </StackPanel>
+                    <ComboBox x:Name="DefaultListCombo" Grid.Column="1" Width="220" SelectedIndex="0">
+                        <ComboBoxItem x:Uid="ListLocal" Tag="local" />
+                        <ComboBoxItem Content="sdnet.page.gd" Tag="sdnet.page.gd" IsEnabled="False" />
+                        <ComboBoxItem Content="worldno1steve.github.io" Tag="worldno1steve.github.io" IsEnabled="False" />
+                        <ComboBoxItem Content="sdnet.pages.dev" Tag="sdnet.pages.dev" IsEnabled="False" />
+                    </ComboBox>
+                </Grid>
+            </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock x:Uid="ApiSourceLabel" VerticalAlignment="Center" />
-                <ComboBox x:Name="ApiSourceCombo" Width="320" SelectedIndex="0">
-                    <ComboBoxItem x:Uid="ApiBing" />
-                    <ComboBoxItem Content="----" IsEnabled="False" />
-                    <ComboBoxItem Content="----" IsEnabled="False" />
-                </ComboBox>
-            </StackPanel>
+            <!-- 语言 -->
+            <TextBlock x:Uid="LanguageHeader" Style="{StaticResource SettingsHeaderText}" Text="语言" />
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="LanguageLabel" FontWeight="SemiBold" Text="显示语言" />
+                        <TextBlock x:Uid="LanguageHint" Style="{StaticResource SettingsDescription}" Text="更改显示语言需重启应用" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="LanguageCombo" Width="220" SelectedIndex="0" SelectionChanged="LanguageCombo_SelectionChanged">
+                            <ComboBoxItem x:Uid="LangZhCN" Tag="zh-CN" />
+                            <ComboBoxItem x:Uid="LangZhHK" Tag="zh-HK" />
+                            <ComboBoxItem x:Uid="LangZhTW" Tag="zh-TW" />
+                            <ComboBoxItem x:Uid="LangEnUS" Tag="en-US" />
+                            <ComboBoxItem x:Uid="LangEnGB" Tag="en-GB" />
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <TextBlock x:Name="LanguageRestartHint" Text="" Foreground="Orange" FontSize="12" Visibility="Collapsed" Margin="0,4,0,0" />
 
-            <Button x:Uid="SaveSettingsBtn" Click="SaveSoftwareSettings_Click" Width="120" Margin="0,8,0,0" />
-            <TextBlock x:Name="AppSettingsStatusText" />
+            <!-- 更新 -->
+            <TextBlock x:Uid="UpdateHeader" Style="{StaticResource SettingsHeaderText}" Text="更新" />
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Uid="AutoUpdateListChk" FontWeight="SemiBold" Text="自动更新列表" />
+                        <TextBlock x:Uid="AutoUpdateListHint" Style="{StaticResource SettingsDescription}" Text="每日从 GitHub 拉取并补充未分类壁纸" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                        <ToggleSwitch x:Name="AutoUpdateListCheck" IsOn="True" />
+                        <Button x:Name="CheckUpdateNowBtn" x:Uid="CheckUpdateNowBtn" Padding="16,8" Click="CheckUpdateNow_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 保存按钮 -->
+            <Button x:Uid="SaveSettingsBtn" Click="SaveSoftwareSettings_Click" Width="160" Margin="0,24,0,0" HorizontalAlignment="Left" Padding="16,10" />
+            <TextBlock x:Name="AppSettingsStatusText" Margin="0,8,0,0" />
 
         </StackPanel>
     </ScrollViewer>
