@@ -120,7 +120,7 @@ namespace BingPaper
                 cbSize = Marshal.SizeOf<NOTIFYICONDATAW>(),
                 hWnd = _windowHandle,
                 uID = 0,
-                uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE,
+                uFlags = (int)(NIF_ICON | NIF_TIP | NIF_MESSAGE),
                 uCallbackMessage = (int)_callbackMessage,
                 hIcon = _hIcon,
                 szTip = tip,
@@ -253,7 +253,7 @@ namespace BingPaper
                 _hIcon = IntPtr.Zero;
             }
 
-            if (_windowHandle != IntPtr.Zero)
+            if (_windowHandle != IntPtr.Zero && _subclassProc != null)
             {
                 try { RemoveWindowSubclass(_windowHandle, _subclassProc, SUBCLASS_ID); }
                 catch { }

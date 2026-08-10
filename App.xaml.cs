@@ -259,7 +259,7 @@ namespace BingPaper
                     var clsidActive = new Guid("75048700-EF1F-11D0-9888-006097DEACF9");
                     var typeA = Type.GetTypeFromCLSID(clsidActive);
                     var objA = typeA != null ? Activator.CreateInstance(typeA) : null;
-                    if (objA != null)
+                    if (objA != null && typeA != null)
                     {
                         try
                         {

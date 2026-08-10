@@ -178,6 +178,7 @@ namespace BingPaper.Pages
                 foreach (var img in images.EnumerateArray())
                 {
                     var urlBase = img.GetProperty("urlbase").GetString();
+                    if (string.IsNullOrEmpty(urlBase)) continue;
                     var fullUrl = "https://www.bing.com" + urlBase + suffix;
                     var fileName = urlBase.Split('/').Last().TrimStart('_') + suffix;
                     if (!fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)) fileName += ".jpg";

@@ -187,7 +187,7 @@ namespace BingPaper.Pages
             AppSettingsStatusText.Text = "正在检查更新...";
             _ = System.Threading.Tasks.Task.Run(async () =>
             {
-                try { await MainWindow.Instance?.AutoUpdateListAsync(); }
+                try { if (MainWindow.Instance != null) await MainWindow.Instance.AutoUpdateListAsync(); }
                 catch { }
                 DispatcherQueue.TryEnqueue(() => AppSettingsStatusText.Text = "列表更新检查完成。");
             });
