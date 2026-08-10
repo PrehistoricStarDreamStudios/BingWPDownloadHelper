@@ -19,8 +19,7 @@
         </Grid.RowDefinitions>
 
         <!-- 标题栏 48px：WinUI3 标准标题栏 -->
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent" Height="48"
-              Padding="0,0,138,0">
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent" Height="48">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -31,11 +30,13 @@
             <Button x:Name="CollapseNavButtonLeft"
                     Click="CollapseNavButton_Click"
                     Grid.Column="0"
-                    Width="48" Height="48"
+                    Width="46" Height="46"
+                    Margin="2,1,0,1"
                     Background="Transparent"
                     BorderThickness="0"
                     Padding="0"
-                    VerticalAlignment="Stretch"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
                     x:Uid="CollapseNavBtn">
                 <FontIcon Glyph="&#xE700;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
             </Button>
@@ -49,18 +50,23 @@
                            FontWeight="SemiBold" />
             </Grid>
 
-            <!-- 主题切换按钮 -->
-            <Button x:Name="ToggleThemeButton"
-                    Click="ToggleThemeButton_Click"
-                    Grid.Column="2"
-                    Width="48" Height="48"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Padding="0"
-                    VerticalAlignment="Stretch"
-                    x:Uid="ToggleThemeBtn">
-                <FontIcon x:Name="ToggleIcon" Glyph="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
-            </Button>
+            <!-- 主题切换按钮（放在系统caption按钮左侧） -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button x:Name="ToggleThemeButton"
+                        Click="ToggleThemeButton_Click"
+                        Width="46" Height="46"
+                        Margin="0,1,0,1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        x:Uid="ToggleThemeBtn">
+                    <FontIcon x:Name="ToggleIcon" Glyph="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
+                </Button>
+                <!-- 预留系统 caption 按钮空间（最小化/最大化/关闭 约 138px） -->
+                <Rectangle Width="138" />
+            </StackPanel>
         </Grid>
 
         <!-- NavigationView + Frame 导航（WinUI3 标准架构） -->

@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Globalization;
 using Windows.Foundation;
+using Windows.UI;
 
 namespace BingPaper
 {
@@ -572,18 +573,22 @@ namespace BingPaper
                 if (appWindow != null)
                 {
                     var titleBar = appWindow.TitleBar;
-                    try { titleBar.ButtonForegroundColor = null; } catch { }
-                    try { titleBar.ButtonBackgroundColor = null; } catch { }
-                    try { titleBar.ButtonHoverForegroundColor = null; } catch { }
-                    try { titleBar.ButtonHoverBackgroundColor = null; } catch { }
-                    try { titleBar.ButtonPressedForegroundColor = null; } catch { }
-                    try { titleBar.ButtonPressedBackgroundColor = null; } catch { }
-                    try { titleBar.ButtonInactiveForegroundColor = null; } catch { }
-                    try { titleBar.ButtonInactiveBackgroundColor = null; } catch { }
-                    try { titleBar.ForegroundColor = null; } catch { }
-                    try { titleBar.BackgroundColor = null; } catch { }
-                    try { titleBar.InactiveForegroundColor = null; } catch { }
-                    try { titleBar.InactiveBackgroundColor = null; } catch { }
+                    // 设置 caption 按钮背景为透明，与 Mica 融合
+                    try { titleBar.ButtonBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0); } catch { }
+                    try { titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(20, 128, 128, 128); } catch { }
+                    try { titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(40, 128, 128, 128); } catch { }
+                    try { titleBar.ButtonInactiveBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0); } catch { }
+                    // caption 按钮前景色跟随主题
+                    var isDark = this.AppTitleBar?.ActualTheme == ElementTheme.Dark;
+                    var fgColor = isDark ? Windows.UI.Color.FromArgb(255, 255, 255, 255) : Windows.UI.Color.FromArgb(255, 0, 0, 0);
+                    try { titleBar.ButtonForegroundColor = fgColor; } catch { }
+                    try { titleBar.ButtonHoverForegroundColor = fgColor; } catch { }
+                    try { titleBar.ButtonPressedForegroundColor = fgColor; } catch { }
+                    try { titleBar.ButtonInactiveForegroundColor = Windows.UI.Color.FromArgb(120, 128, 128, 128); } catch { }
+                    try { titleBar.ForegroundColor = fgColor; } catch { }
+                    try { titleBar.BackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0); } catch { }
+                    try { titleBar.InactiveForegroundColor = Windows.UI.Color.FromArgb(120, 128, 128, 128); } catch { }
+                    try { titleBar.InactiveBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0); } catch { }
                 }
             }
             catch { }
