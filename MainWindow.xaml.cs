@@ -439,12 +439,11 @@ namespace BingPaper
         {
             try
             {
-                var toggleBtn = this.AppTitleBar?.FindName("ToggleThemeButton") as Button;
-                if (toggleBtn != null)
+                if (ToggleIcon != null)
                 {
                     var isDark = this.AppTitleBar?.ActualTheme == ElementTheme.Dark;
-                    var glyph = isDark ? "\u2600" : "\u263E"; // ☀ : ☾
-                    toggleBtn.Content = new FontIcon { Glyph = glyph, FontFamily = new FontFamily("Segoe UI Symbol") };
+                    // 深色模式显示太阳(切到浅色)，浅色模式显示月亮(切到深色)
+                    ToggleIcon.Glyph = isDark ? "\uE706;" : "\uE706;";
                 }
             }
             catch { }

@@ -12,6 +12,7 @@ namespace BingPaper.Pages
 
         public AppSettingsPage()
         {
+            _isLoading = true;
             this.InitializeComponent();
             Loaded += AppSettingsPage_Loaded;
         }

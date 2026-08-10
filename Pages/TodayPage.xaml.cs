@@ -139,6 +139,12 @@ namespace BingPaper.Pages
             {
                 FrameworkElement? target = BtnUHD ?? Btn1080 ?? (FrameworkElement?)Btn720;
                 if (target == null) return;
+                if (target.ActualWidth <= 0 || SegGrid.ActualWidth <= 0)
+                {
+                    // 控件尚未完成测量，延迟重试
+                    DispatcherQueue.TryEnqueue(() => RecalcSelIndicator());
+                    return;
+                }
                 var t = target.TransformToVisual(SegGrid).TransformPoint(new Windows.Foundation.Point(0, 0));
                 double innerWidth = target.ActualWidth;
                 SelIndicator.Width = Math.Max(0, innerWidth - 4);

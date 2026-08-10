@@ -19,7 +19,8 @@
         </Grid.RowDefinitions>
 
         <!-- 标题栏 48px：WinUI3 标准标题栏 -->
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent" Height="48">
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent" Height="48"
+              Padding="0,0,138,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
