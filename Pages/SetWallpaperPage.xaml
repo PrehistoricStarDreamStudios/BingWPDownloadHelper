@@ -7,46 +7,96 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel Margin="8">
-        <TextBlock x:Uid="SetWallpaperPageTitle" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+    <Grid>
+    <!-- 隐藏的幻灯片目录输入框，保留供代码后台读写 -->
+    <TextBox x:Name="SlideshowFolderText" Visibility="Collapsed" />
 
-        <Button x:Uid="OpenPersonalizationBtn" Click="OpenWindowsPersonalization_Click" Padding="16,10" Margin="0,0,0,16" />
-        <TextBlock x:Uid="PersonalizationHint" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12" />
+    <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="32,24,32,32" MaxWidth="1000" Spacing="24">
 
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-            <TextBlock x:Uid="SlideshowFolderLabel" VerticalAlignment="Center" />
-            <TextBox x:Name="SlideshowFolderText" HorizontalAlignment="Stretch" Margin="8,0" IsReadOnly="False" />
-            <Button x:Uid="BrowseBtn2" Click="OpenFolderPicker_Click" Margin="8,0,0,0">
-                <FontIcon Glyph="&#xE8DA;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-            </Button>
+            <!-- 页面标题 -->
+            <TextBlock Text="设置壁纸" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,0"
+                       Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+
+            <Grid ColumnSpacing="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="320" />
+                    <ColumnDefinition Width="340" />
+                </Grid.ColumnDefinitions>
+
+                <!-- 左侧：壁纸效果预览 -->
+                <Border Grid.Column="0" CornerRadius="8"
+                        Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
+                        BorderThickness="2">
+                    <Grid>
+                        <Viewbox Stretch="Uniform" Margin="0">
+                            <TextBlock Text="壁纸效果预览" FontSize="14"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                        </Viewbox>
+                    </Grid>
+                </Border>
+
+                <!-- 右侧：设置面板 -->
+                <Border Grid.Column="1" Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="16">
+
+                        <!-- 播放设置 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="播放设置" FontSize="13" FontWeight="Medium"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                            <RadioButtons x:Name="PlaybackModeGroup" SelectionChanged="PlaybackMode_SelectionChanged" MaxColumns="1">
+                                <RadioButton Content="今日壁纸" Tag="Today" IsChecked="True" />
+                                <RadioButton Content="幻灯片放映" Tag="Slideshow" />
+                            </RadioButtons>
+                        </StackPanel>
+
+                        <!-- 填充方式 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="填充方式" FontSize="13" FontWeight="Medium"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                            <ComboBox x:Name="FillModeCombo" Width="260" SelectedIndex="0">
+                                <ComboBoxItem x:Uid="FillFill" Tag="Fill" />
+                                <ComboBoxItem x:Uid="FillFit" Tag="Fit" />
+                                <ComboBoxItem x:Uid="FillStretch" Tag="Stretch" />
+                                <ComboBoxItem x:Uid="FillTile" Tag="Tile" />
+                                <ComboBoxItem x:Uid="FillCenter" Tag="Center" />
+                                <ComboBoxItem x:Uid="FillSpan" Tag="Span" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- 切换时间（仅幻灯片放映时可用） -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="切换时间" FontSize="13" FontWeight="Medium"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                            <ComboBox x:Name="SlideshowIntervalCombo" Width="260" SelectedIndex="1" IsEnabled="False">
+                                <ComboBoxItem x:Uid="Interval1m" Tag="60" />
+                                <ComboBoxItem x:Uid="Interval10m" Tag="600" />
+                                <ComboBoxItem x:Uid="Interval30m" Tag="1800" />
+                                <ComboBoxItem x:Uid="Interval1h" Tag="3600" />
+                                <ComboBoxItem x:Uid="Interval6h" Tag="21600" />
+                                <ComboBoxItem x:Uid="Interval1d" Tag="86400" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- 是否乱序 -->
+                        <ToggleSwitch x:Name="ShuffleCheck" x:Uid="ShuffleChk" />
+
+                        <!-- 同时设置为锁屏壁纸 -->
+                        <CheckBox x:Name="LockScreenCheck" Content="同时设置为锁屏壁纸" FontSize="13"
+                                  Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+
+                        <!-- 一键设置 -->
+                        <Button x:Uid="ApplySettingsBtn" Click="ApplySlideshowButton_Click" Width="260" Height="40"
+                                Style="{ThemeResource AccentButtonStyle}" />
+
+                        <TextBlock x:Name="SettingsStatusText" Margin="0,4,0,0" TextWrapping="Wrap" FontSize="12"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
         </StackPanel>
-
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-            <TextBlock x:Uid="IntervalLabel" VerticalAlignment="Center" />
-            <ComboBox x:Name="SlideshowIntervalCombo" Width="160" Margin="8,0" SelectedIndex="2">
-                <ComboBoxItem x:Uid="Interval1m" Tag="60" />
-                <ComboBoxItem x:Uid="Interval10m" Tag="600" />
-                <ComboBoxItem x:Uid="Interval30m" Tag="1800" />
-                <ComboBoxItem x:Uid="Interval1h" Tag="3600" />
-                <ComboBoxItem x:Uid="Interval6h" Tag="21600" />
-                <ComboBoxItem x:Uid="Interval1d" Tag="86400" />
-            </ComboBox>
-            <ToggleSwitch x:Name="ShuffleCheck" x:Uid="ShuffleChk" Margin="12,0" />
-        </StackPanel>
-
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-            <TextBlock x:Uid="FillModeLabel" VerticalAlignment="Center" />
-            <ComboBox x:Name="FillModeCombo" Width="240" Margin="8,0" SelectedIndex="4">
-                <ComboBoxItem x:Uid="FillFill" Tag="Fill" />
-                <ComboBoxItem x:Uid="FillFit" Tag="Fit" />
-                <ComboBoxItem x:Uid="FillStretch" Tag="Stretch" />
-                <ComboBoxItem x:Uid="FillTile" Tag="Tile" />
-                <ComboBoxItem x:Uid="FillCenter" Tag="Center" />
-                <ComboBoxItem x:Uid="FillSpan" Tag="Span" />
-            </ComboBox>
-        </StackPanel>
-
-        <Button x:Uid="ApplySettingsBtn" Click="ApplySlideshowButton_Click" Width="120" Margin="0,8,0,0" />
-        <TextBlock x:Name="SettingsStatusText" Margin="0,8,0,0" TextWrapping="Wrap" />
-    </StackPanel>
+    </ScrollViewer>
+    </Grid>
 </Page>

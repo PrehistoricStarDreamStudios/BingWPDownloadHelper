@@ -18,6 +18,7 @@ namespace BingPaper.Pages
             try
             {
                 SlideshowFolderText.Text = AppData.WallpaperFolderPath;
+                UpdateIntervalEnabledState();
                 // Restore saved settings
                 if (AppData.Config.TryGetValue("slideshow_interval", out var iv) && int.TryParse(iv, out var x))
                 {
@@ -47,6 +48,22 @@ namespace BingPaper.Pages
                     FileName = "ms-settings:personalization",
                     UseShellExecute = true
                 });
+            }
+            catch { }
+        }
+
+        private void PlaybackMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateIntervalEnabledState();
+        }
+
+        private void UpdateIntervalEnabledState()
+        {
+            try
+            {
+                // 切换时间仅在幻灯片放映模式下可用
+                bool isSlideshow = PlaybackModeGroup != null && PlaybackModeGroup.SelectedIndex == 1;
+                if (SlideshowIntervalCombo != null) SlideshowIntervalCombo.IsEnabled = isSlideshow;
             }
             catch { }
         }

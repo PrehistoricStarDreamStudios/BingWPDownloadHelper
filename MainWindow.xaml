@@ -18,20 +18,36 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 标题栏 48px：WinUI3 标准标题栏 -->
+        <!-- 标题栏 48px：左 返回+侧栏切换 / 中 标题 / 右 主题切换+系统caption -->
         <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent" Height="48">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <!-- 汉堡菜单按钮 -->
-            <Button x:Name="CollapseNavButtonLeft"
-                    Click="CollapseNavButton_Click"
+            <!-- 返回按钮（与设计稿左侧 chevron-left 对应） -->
+            <Button x:Name="BackButton"
+                    Click="BackButton_Click"
                     Grid.Column="0"
                     Width="46" Height="46"
                     Margin="2,1,0,1"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="0"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    ToolTipService.ToolTip="返回">
+                <FontIcon Glyph="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
+            </Button>
+
+            <!-- 汉堡菜单按钮（折叠/展开侧边栏，对应设计稿 panel-left-close） -->
+            <Button x:Name="CollapseNavButtonLeft"
+                    Click="CollapseNavButton_Click"
+                    Grid.Column="1"
+                    Width="46" Height="46"
+                    Margin="0,1,0,1"
                     Background="Transparent"
                     BorderThickness="0"
                     Padding="0"
@@ -41,17 +57,19 @@
                 <FontIcon Glyph="&#xE700;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
             </Button>
 
-            <!-- 拖拽区域 -->
-            <Grid x:Name="DragRegion" Grid.Column="1" Margin="12,0,0,0">
-                <TextBlock x:Uid="AppTitleText"
+            <!-- 拖拽区域 + 居中标题 -->
+            <Grid x:Name="DragRegion" Grid.Column="2" Margin="12,0,0,0">
+                <TextBlock x:Name="AppTitleText"
+                           x:Uid="AppTitleText"
                            VerticalAlignment="Center"
                            Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                           FontSize="14"
-                           FontWeight="SemiBold" />
+                           FontSize="13"
+                           FontWeight="Normal"
+                           TextTrimming="CharacterEllipsis" />
             </Grid>
 
             <!-- 主题切换按钮（放在系统caption按钮左侧） -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal">
+            <StackPanel Grid.Column="3" Orientation="Horizontal">
                 <Button x:Name="ToggleThemeButton"
                         Click="ToggleThemeButton_Click"
                         Width="46" Height="46"
@@ -75,7 +93,7 @@
                         PaneDisplayMode="Left"
                         IsPaneOpen="True"
                         CompactPaneLength="48"
-                        OpenPaneLength="240"
+                        OpenPaneLength="260"
                         IsPaneToggleButtonVisible="False"
                         IsBackButtonVisible="Collapsed"
                         IsSettingsVisible="False"

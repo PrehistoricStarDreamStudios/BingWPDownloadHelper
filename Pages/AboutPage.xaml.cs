@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace BingPaper.Pages
@@ -10,16 +11,6 @@ namespace BingPaper.Pages
         public AboutPage()
         {
             this.InitializeComponent();
-            Loaded += AboutPage_Loaded;
-        }
-
-        private void AboutPage_Loaded(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                AboutVersionText.Text = $"BingPaper v0.1";
-            }
-            catch { }
         }
 
         private void OpenLinksButton_Click(object sender, RoutedEventArgs e)
@@ -57,23 +48,6 @@ namespace BingPaper.Pages
             OpenUrl("mailto:sdnet@sdnet.page.gd");
         }
 
-        private void ShowMottoButton_Click(object sender, RoutedEventArgs e)
-        {
-            var mottos = new[]
-            {
-                "代码改变世界，壁纸改变桌面。",
-                "每天一张新壁纸，每天一个好心情。",
-                "Bing 每日壁纸，让桌面不再单调。",
-                "生活不止眼前的代码，还有 Bing 的壁纸。",
-                "世界那么大，Bing 带你去看看。",
-                "壁纸，是桌面的灵魂。",
-                "好的壁纸，是灵感的源泉。",
-                "每一张 Bing 壁纸，都是一扇窗。",
-            };
-            var rng = new Random();
-            MottoText.Text = mottos[rng.Next(mottos.Length)];
-        }
-
         private void OptimizeMemoryButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -99,5 +73,53 @@ namespace BingPaper.Pages
             }
             catch { }
         }
+
+        // ===== 右侧详情面板逻辑（对应设计稿 about.html 的 openPanel / closePanel） =====
+
+        private void OpenOpenSourcePanel_Click(object sender, RoutedEventArgs e)
+        {
+            OpenPanel("开源引用", new List<AboutLinkItem>
+            {
+                new AboutLinkItem { Name = "Microsoft.WindowsAppSDK", Url = "https://github.com/microsoft/WindowsAppSDK" },
+                new AboutLinkItem { Name = "Microsoft.Windows.SDK.BuildTools", Url = "https://www.nuget.org/packages/Microsoft.Windows.SDK.BuildTools" }
+            });
+        }
+
+        private void OpenToolsPanel_Click(object sender, RoutedEventArgs e)
+        {
+            OpenPanel("工具引用", new List<AboutLinkItem>
+            {
+                new AboutLinkItem { Name = "Visual Studio", Url = "https://visualstudio.microsoft.com/zh-hans/vs/" },
+                new AboutLinkItem { Name = "Trae CN", Url = "https://www.trae.cn" },
+                new AboutLinkItem { Name = "SteamCommunity 302", Url = "https://www.dogfight360.com/blog/18682/" }
+            });
+        }
+
+        private void ClosePanel_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DetailPane != null) DetailPane.Visibility = Visibility.Collapsed;
+            }
+            catch { }
+        }
+
+        private void OpenPanel(string title, List<AboutLinkItem> items)
+        {
+            try
+            {
+                if (PanelTitle != null) PanelTitle.Text = title;
+                if (PanelList != null) PanelList.ItemsSource = items;
+                if (DetailPane != null) DetailPane.Visibility = Visibility.Visible;
+            }
+            catch { }
+        }
+    }
+
+    /// <summary>关于页右侧详情面板列表项（对应设计稿 panelData.items）。</summary>
+    public sealed class AboutLinkItem
+    {
+        public string Name { get; set; } = "";
+        public string Url { get; set; } = "";
     }
 }
