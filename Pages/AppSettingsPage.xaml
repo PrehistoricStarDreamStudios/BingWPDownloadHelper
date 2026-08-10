@@ -50,7 +50,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="AutoStartChk" />
                         <TextBlock Style="{StaticResource SettingsDescription}" Text="开机时自动启动本软件" />
                     </StackPanel>
-                    <ToggleSwitch x:Name="AutoStartCheck" Grid.Column="1" Toggled="AutoStartCheck_Toggled" />
+                    <ToggleSwitch x:Name="AutoStartCheck" Grid.Column="1" VerticalAlignment="Center" Toggled="AutoStartCheck_Toggled" />
                 </Grid>
             </Border>
 
@@ -64,7 +64,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="CloseBehaviorLabel" />
                         <TextBlock Style="{StaticResource SettingsDescription}" Text="选择关闭窗口时的行为" />
                     </StackPanel>
-                    <ComboBox x:Name="CloseBehaviorCombo" Grid.Column="1" Width="160" SelectedIndex="0" SelectionChanged="CloseBehaviorCombo_SelectionChanged">
+                    <ComboBox x:Name="CloseBehaviorCombo" Grid.Column="1" VerticalAlignment="Center" Width="160" SelectedIndex="0" SelectionChanged="CloseBehaviorCombo_SelectionChanged">
                         <ComboBoxItem x:Uid="CloseTray" Tag="Tray" />
                         <ComboBoxItem x:Uid="CloseExit" Tag="Exit" />
                     </ComboBox>
@@ -83,7 +83,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="ThemeModeLabel" />
                         <TextBlock Style="{StaticResource SettingsDescription}" Text="选择应用主题" />
                     </StackPanel>
-                    <ComboBox x:Name="ThemeModeCombo" Grid.Column="1" Width="140" SelectedIndex="0" SelectionChanged="ThemeMode_SelectionChanged">
+                    <ComboBox x:Name="ThemeModeCombo" Grid.Column="1" VerticalAlignment="Center" Width="140" SelectedIndex="0" SelectionChanged="ThemeMode_SelectionChanged">
                         <ComboBoxItem x:Uid="ThemeSystem" Tag="System" />
                         <ComboBoxItem x:Uid="ThemeLight" Tag="Light" />
                         <ComboBoxItem x:Uid="ThemeDark" Tag="Dark" />
@@ -101,7 +101,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="ColorThemeLabel" />
                         <TextBlock Style="{StaticResource SettingsDescription}" Text="选择应用强调色" />
                     </StackPanel>
-                    <ComboBox x:Name="ColorThemeCombo" Grid.Column="1" Width="140" SelectedIndex="0" SelectionChanged="ColorTheme_SelectionChanged">
+                    <ComboBox x:Name="ColorThemeCombo" Grid.Column="1" VerticalAlignment="Center" Width="140" SelectedIndex="0" SelectionChanged="ColorTheme_SelectionChanged">
                         <ComboBoxItem x:Uid="ColorSystem" Tag="System" />
                         <ComboBoxItem x:Uid="ColorBlue" Tag="Blue" />
                         <ComboBoxItem x:Uid="ColorGreen" Tag="Green" />
@@ -122,7 +122,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="BackdropTypeLabel" />
                         <TextBlock Style="{StaticResource SettingsDescription}" Text="选择窗口背景效果" />
                     </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="12">
                         <ComboBox x:Name="BackdropTypeCombo" Width="160" SelectedIndex="0" SelectionChanged="BackdropType_SelectionChanged">
                             <ComboBoxItem x:Uid="BackdropMica" Tag="Mica" />
                             <ComboBoxItem x:Uid="BackdropAcrylic" Tag="Acrylic" />
@@ -147,7 +147,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="DownloadThreadsLabel" />
                         <TextBlock Style="{StaticResource SettingsDescription}" x:Uid="DownloadThreadsHint" />
                     </StackPanel>
-                    <NumberBox x:Name="DownloadThreadsBox" Grid.Column="1" Minimum="1" Maximum="32" Value="4" Width="100" />
+                    <NumberBox x:Name="DownloadThreadsBox" Grid.Column="1" VerticalAlignment="Center" Minimum="1" Maximum="32" Value="4" Width="100" />
                 </Grid>
             </Border>
 
@@ -161,7 +161,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="ApiSourceLabel" />
                         <TextBlock Style="{StaticResource SettingsDescription}" Text="选择壁纸数据来源" />
                     </StackPanel>
-                    <ComboBox x:Name="ApiSourceCombo" Grid.Column="1" Width="220" SelectedIndex="0">
+                    <ComboBox x:Name="ApiSourceCombo" Grid.Column="1" VerticalAlignment="Center" Width="220" SelectedIndex="0">
                         <ComboBoxItem x:Uid="ApiBing" />
                         <ComboBoxItem Content="----" IsEnabled="False" />
                         <ComboBoxItem Content="----" IsEnabled="False" />
@@ -179,7 +179,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="DefaultListLabel" />
                         <TextBlock Style="{StaticResource SettingsDescription}" Text="选择默认壁纸列表来源" />
                     </StackPanel>
-                    <ComboBox x:Name="DefaultListCombo" Grid.Column="1" Width="220" SelectedIndex="0">
+                    <ComboBox x:Name="DefaultListCombo" Grid.Column="1" VerticalAlignment="Center" Width="220" SelectedIndex="0">
                         <ComboBoxItem x:Uid="ListLocal" Tag="local" />
                         <ComboBoxItem Content="sdnet.page.gd" Tag="sdnet.page.gd" IsEnabled="False" />
                         <ComboBoxItem Content="worldno1steve.github.io" Tag="worldno1steve.github.io" IsEnabled="False" />
@@ -200,7 +200,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="LanguageLabel" />
                         <TextBlock Style="{StaticResource SettingsDescription}" Text="更改显示语言需重启应用" />
                     </StackPanel>
-                    <ComboBox x:Name="LanguageCombo" Grid.Column="1" Width="220" SelectedIndex="0" SelectionChanged="LanguageCombo_SelectionChanged">
+                    <ComboBox x:Name="LanguageCombo" Grid.Column="1" VerticalAlignment="Center" Width="220" SelectedIndex="0" SelectionChanged="LanguageCombo_SelectionChanged">
                         <ComboBoxItem x:Uid="LangZhCN" Tag="zh-CN" />
                         <ComboBoxItem x:Uid="LangZhHK" Tag="zh-HK" />
                         <ComboBoxItem x:Uid="LangZhTW" Tag="zh-TW" />
@@ -223,7 +223,7 @@
                         <TextBlock Style="{StaticResource SettingsItemTitle}" x:Uid="AutoUpdateListChk" />
                         <TextBlock Style="{StaticResource SettingsDescription}" Text="每日从 GitHub 拉取并补充未分类壁纸" />
                     </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="12">
                         <ToggleSwitch x:Name="AutoUpdateListCheck" IsOn="True" />
                         <Button x:Name="CheckUpdateNowBtn" x:Uid="CheckUpdateNowBtn" Padding="16,8" Click="CheckUpdateNow_Click" />
                     </StackPanel>

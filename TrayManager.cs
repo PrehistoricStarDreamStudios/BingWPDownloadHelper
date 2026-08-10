@@ -23,6 +23,7 @@ namespace BingPaper
         private const uint SUBCLASS_ID = 1001;
 
         private MenuFlyout? _menuFlyout;
+        private bool _hideWindowAfterMenuClose = false;
 
         public event EventHandler? ShowRequested;
         public event EventHandler? ExitRequested;
@@ -196,41 +197,75 @@ namespace BingPaper
                 {
                     try
                     {
-                        GetCursorPos(out POINT pt);
+                        GetCursorPos(out POINT cursorPt);
 
-                        if (_menuFlyout == null)
-                        {
-                            _menuFlyout = new MenuFlyout();
+                        // 用 ClientToScreen 获取客户区原点的屏幕坐标，再反推相对坐标
+                        // 比 ScreenToClient 更可靠（窗口隐藏/最小化时也能正确计算）
+                        var clientOrigin = new POINT { X = 0, Y = 0 };
+                        ClientToScreen(_windowHandle, ref clientOrigin);
 
-                            var showItem = new MenuFlyoutItem
-                            {
-                                Text = GetString("TrayShow") ?? "显示软件"
-                            };
-                            showItem.Click += (s, e) => ShowRequested?.Invoke(this, EventArgs.Empty);
-                            _menuFlyout.Items.Add(showItem);
-
-                            _menuFlyout.Items.Add(new MenuFlyoutSeparator());
-
-                            var exitItem = new MenuFlyoutItem
-                            {
-                                Text = GetString("TrayExit") ?? "关闭软件"
-                            };
-                            exitItem.Click += (s, e) => ExitRequested?.Invoke(this, EventArgs.Empty);
-                            _menuFlyout.Items.Add(exitItem);
-                        }
-
-                        // 转换屏幕坐标到 DIP 并定位
                         var dpi = GetDpiForWindow(_windowHandle);
                         var scale = dpi / 96.0;
-                        var x = pt.X / scale;
-                        var y = pt.Y / scale;
+                        var x = (cursorPt.X - clientOrigin.X) / scale;
+                        var y = (cursorPt.Y - clientOrigin.Y) / scale;
 
-                        _menuFlyout.ShowAt(_window.Content, new Windows.Foundation.Point(x, y));
+                        // 确保菜单已创建
+                        EnsureMenuCreated();
+
+                        // 如果窗口隐藏，临时显示以承载 MenuFlyout
+                        var wasHidden = IsWindowVisible(_windowHandle) == 0;
+                        if (wasHidden)
+                        {
+                            ShowWindow(_windowHandle, SW_SHOWNOACTIVATE);
+                        }
+                        _hideWindowAfterMenuClose = wasHidden;
+
+                        var target = _window.Content as Microsoft.UI.Xaml.FrameworkElement;
+                        if (target != null)
+                        {
+                            if (target.ActualWidth > 0)
+                                _menuFlyout.ShowAt(target, new Windows.Foundation.Point(x, y));
+                            else
+                                _menuFlyout.ShowAt(target, new Windows.Foundation.Point(0, 0));
+                        }
                     }
                     catch { }
                 });
             }
             catch { }
+        }
+
+        private void EnsureMenuCreated()
+        {
+            if (_menuFlyout != null) return;
+
+            _menuFlyout = new MenuFlyout();
+
+            var showItem = new MenuFlyoutItem
+            {
+                Text = GetString("TrayShow") ?? "显示软件"
+            };
+            showItem.Click += (s, e) => ShowRequested?.Invoke(this, EventArgs.Empty);
+            _menuFlyout.Items.Add(showItem);
+
+            _menuFlyout.Items.Add(new MenuFlyoutSeparator());
+
+            var exitItem = new MenuFlyoutItem
+            {
+                Text = GetString("TrayExit") ?? "关闭软件"
+            };
+            exitItem.Click += (s, e) => ExitRequested?.Invoke(this, EventArgs.Empty);
+            _menuFlyout.Items.Add(exitItem);
+
+            // 只注册一次 Closed 事件：菜单关闭后按需隐藏窗口
+            _menuFlyout.Closed += (s, e) =>
+            {
+                if (_hideWindowAfterMenuClose)
+                {
+                    _hideWindowAfterMenuClose = false;
+                    try { ShowWindow(_windowHandle, SW_HIDE); } catch { }
+                }
+            };
         }
 
         public void HideToTray()
@@ -322,6 +357,7 @@ namespace BingPaper
         private const int SW_HIDE = 0;
         private const int SW_SHOW = 5;
         private const int SW_RESTORE = 9;
+        private const int SW_SHOWNOACTIVATE = 4;
 
         private const int WM_LBUTTONUP = 0x0202;
         private const int WM_RBUTTONUP = 0x0205;
@@ -364,6 +400,15 @@ namespace BingPaper
 
         [DllImport("user32.dll")]
         private static extern uint GetDpiForWindow(IntPtr hwnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        private static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        private static extern int IsWindowVisible(IntPtr hWnd);
 
         #endregion
     }

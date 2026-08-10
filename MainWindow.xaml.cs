@@ -311,6 +311,10 @@ namespace BingPaper
                 // 确保托盘图标已初始化（窗口句柄就绪后重试）
                 try { _trayManager?.EnsureInitialized(); } catch { }
 
+                // 窗口完全加载后再次更新标题栏颜色，确保 caption 按钮为 WinUI3 样式
+                try { UpdateTitleBarColors(); } catch { }
+                try { UpdateToggleButtonIcon(); } catch { }
+
                 // 导航到首页（今日壁纸）
                 NavView.SelectedItem = NavView.MenuItems[0] as NavigationViewItem;
                 // 自动更新列表
@@ -442,9 +446,11 @@ namespace BingPaper
             {
                 if (ToggleIcon != null)
                 {
-                    var isDark = this.AppTitleBar?.ActualTheme == ElementTheme.Dark;
-                    // 深色模式显示太阳（点击切到浅色），浅色模式显示月亮（点击切到深色）
-                    ToggleIcon.Glyph = isDark ? "\uE793" : "\uE706";
+                    var root = this.Content as FrameworkElement;
+                    var isDark = root?.ActualTheme == ElementTheme.Dark;
+                    // 深色模式显示太阳（Brightness \uE708，提示点击切换到亮色）
+                    // 亮色模式显示月亮（QuietHours \uE728，提示点击切换到深色）
+                    ToggleIcon.Glyph = isDark ? "\uE708" : "\uE728";
                 }
             }
             catch { }
@@ -578,8 +584,8 @@ namespace BingPaper
                     try { titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(20, 128, 128, 128); } catch { }
                     try { titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(40, 128, 128, 128); } catch { }
                     try { titleBar.ButtonInactiveBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0); } catch { }
-                    // caption 按钮前景色跟随主题
-                    var isDark = this.AppTitleBar?.ActualTheme == ElementTheme.Dark;
+                    // caption 按钮前景色跟随主题（用根内容的 ActualTheme，比 AppTitleBar 更可靠）
+                    var isDark = (this.Content as FrameworkElement)?.ActualTheme == ElementTheme.Dark;
                     var fgColor = isDark ? Windows.UI.Color.FromArgb(255, 255, 255, 255) : Windows.UI.Color.FromArgb(255, 0, 0, 0);
                     try { titleBar.ButtonForegroundColor = fgColor; } catch { }
                     try { titleBar.ButtonHoverForegroundColor = fgColor; } catch { }
