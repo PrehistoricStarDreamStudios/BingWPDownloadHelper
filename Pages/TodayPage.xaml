@@ -9,33 +9,38 @@
 
     <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
-        <StackPanel Padding="32,24,32,32" MaxWidth="1100">
+        <StackPanel Padding="32,24,32,32" MaxWidth="1100" Spacing="24">
 
-            <!-- 页面标题 -->
-            <TextBlock Text="今日壁纸" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"
+            <!-- 页面标题（对应设计稿 h1 28px SemiBold） -->
+            <TextBlock Text="今日壁纸" FontSize="28" FontWeight="SemiBold"
                        Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
 
-            <!-- 16:9 大图展示区域 -->
-            <Border CornerRadius="8" Padding="4"
+            <!-- 16:9 大图展示区域（对应设计稿 aspect-ratio: 16/9, dashed border, card 背景） -->
+            <Border CornerRadius="8"
                     Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                     BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
                     BorderThickness="2">
                 <Grid>
                     <Image x:Name="MainImage" Stretch="UniformToFill" Height="450" />
-                    <TextBlock Text="今日壁纸展示区域" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               x:Name="PlaceholderText" Visibility="Collapsed" />
+                    <TextBlock Text="今日壁纸展示区域"
+                               x:Name="PlaceholderText"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               FontSize="14"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Visibility="Collapsed" />
                 </Grid>
             </Border>
 
-            <!-- 分辨率分段选择器 -->
-            <Grid x:Name="SegGrid" Height="40" Margin="0,16,0,8" Background="Transparent">
+            <!-- 分辨率分段选择器（720p / 1080p / UHD） -->
+            <Grid x:Name="SegGrid" Height="40" Background="Transparent">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
+                <!-- 选中指示器 -->
                 <Border x:Name="SelIndicator"
                         Background="{ThemeResource SystemControlHighlightAccentBrush}"
                         CornerRadius="6"
@@ -95,8 +100,8 @@
                 </Grid>
             </Grid>
 
-            <!-- 信息卡片：标题 / 版权 -->
-            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="8" Padding="20" Margin="0,8,0,0">
+            <!-- 信息卡片：标题 / 版权（对应设计稿 wallpaper info card） -->
+            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="8" Padding="20">
                 <StackPanel Spacing="6">
                     <TextBlock Text="壁纸信息" FontSize="13"
                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />

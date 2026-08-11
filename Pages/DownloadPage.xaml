@@ -8,80 +8,80 @@
     mc:Ignorable="d">
 
     <Grid>
-    <!-- 隐藏的下载目录输入框，保留供代码后台读写（设计稿将路径放在软件设置页） -->
-    <TextBox x:Name="DownloadFolderText" Visibility="Collapsed" />
+        <!-- 隐藏的下载目录输入框，保留供代码后台读写 -->
+        <TextBox x:Name="DownloadFolderText" Visibility="Collapsed" />
 
-    <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
-                  VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
-        <StackPanel Padding="32,24,32,32" MaxWidth="760" Spacing="20">
+        <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+            <StackPanel Padding="32,24,32,32" MaxWidth="720" Spacing="20">
 
-            <!-- 页面标题 -->
-            <TextBlock Text="下载壁纸" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,4"
-                       Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                <!-- 页面标题 -->
+                <TextBlock Text="下载壁纸" FontSize="28" FontWeight="SemiBold"
+                           Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
 
-            <!-- 方向 / 比例 / 分辨率 -->
-            <Grid ColumnSpacing="16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+                <!-- 方向 / 比例 / 分辨率（对应设计稿 grid-cols-3 gap-4） -->
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Spacing="8">
-                    <TextBlock Text="方向：" FontSize="13" FontWeight="Medium"
-                               Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
-                    <ComboBox x:Name="OrientationCombo" Width="160" SelectedIndex="0">
-                        <ComboBoxItem Content="横屏" Tag="landscape" />
-                        <ComboBoxItem Content="竖屏" Tag="portrait" />
-                    </ComboBox>
-                </StackPanel>
-
-                <StackPanel Grid.Column="1" Spacing="8">
-                    <TextBlock Text="比例：" FontSize="13" FontWeight="Medium"
-                               Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
-                    <ComboBox x:Name="AspectRatioCombo" Width="160" SelectionChanged="AspectRatioCombo_SelectionChanged" />
-                </StackPanel>
-
-                <StackPanel Grid.Column="2" Spacing="8">
-                    <TextBlock Text="分辨率：" FontSize="13" FontWeight="Medium"
-                               Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
-                    <ComboBox x:Name="ResolutionCombo" Width="160" />
-                </StackPanel>
-            </Grid>
-
-            <!-- 历史日期卡片 -->
-            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="8" Padding="16,16,16,16">
-                <StackPanel Spacing="12">
-                    <ToggleSwitch x:Name="DownloadHistoryCheck" x:Uid="DownloadHistoryChk" Toggled="DownloadHistoryCheck_Toggled" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="日期：" VerticalAlignment="Center" FontSize="13"
-                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-                        <ComboBox x:Name="YearCombo" Width="90" IsEnabled="False" SelectionChanged="DatePart_SelectionChanged" />
-                        <TextBlock Text="年" VerticalAlignment="Center" FontSize="13"
-                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-                        <ComboBox x:Name="MonthCombo" Width="70" IsEnabled="False" SelectionChanged="DatePart_SelectionChanged" />
-                        <TextBlock Text="月" VerticalAlignment="Center" FontSize="13"
-                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-                        <ComboBox x:Name="DayCombo" Width="70" IsEnabled="False" SelectionChanged="DatePart_SelectionChanged" />
-                        <TextBlock Text="日" VerticalAlignment="Center" FontSize="13"
-                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                    <StackPanel Grid.Column="0" Spacing="8">
+                        <TextBlock Text="方向：" FontSize="13" FontWeight="Medium"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                        <ComboBox x:Name="OrientationCombo" Width="160" SelectedIndex="0">
+                            <ComboBoxItem Content="横屏" Tag="landscape" />
+                            <ComboBoxItem Content="竖屏" Tag="portrait" />
+                        </ComboBox>
                     </StackPanel>
-                </StackPanel>
-            </Border>
 
-            <!-- 根据屏幕比例及分辨率推荐壁纸 -->
-            <CheckBox x:Name="RecommendCheck" Content="根据屏幕比例及分辨率推荐壁纸" FontSize="13"
-                      Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                    <StackPanel Grid.Column="1" Spacing="8">
+                        <TextBlock Text="比例：" FontSize="13" FontWeight="Medium"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                        <ComboBox x:Name="AspectRatioCombo" Width="160" SelectionChanged="AspectRatioCombo_SelectionChanged" />
+                    </StackPanel>
 
-            <!-- 下载按钮 -->
-            <Button x:Uid="StartDownloadBtn" Click="StartDownloadButton_Click" Width="180" Height="40"
-                    Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Left" />
+                    <StackPanel Grid.Column="2" Spacing="8">
+                        <TextBlock Text="分辨率：" FontSize="13" FontWeight="Medium"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                        <ComboBox x:Name="ResolutionCombo" Width="160" />
+                    </StackPanel>
+                </Grid>
 
-            <!-- 下载状态 -->
-            <TextBox x:Name="DownloadStatusText" TextWrapping="Wrap" Margin="0,4,0,0" AcceptsReturn="True" IsReadOnly="True"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto" Height="160"
-                     Header="下载状态" />
-        </StackPanel>
-    </ScrollViewer>
+                <!-- 历史日期卡片（对应设计稿 history date card） -->
+                <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="12">
+                        <ToggleSwitch x:Name="DownloadHistoryCheck" x:Uid="DownloadHistoryChk" Toggled="DownloadHistoryCheck_Toggled" />
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="日期：" VerticalAlignment="Center" FontSize="13"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                            <ComboBox x:Name="YearCombo" Width="90" IsEnabled="False" SelectionChanged="DatePart_SelectionChanged" />
+                            <TextBlock Text="年" VerticalAlignment="Center" FontSize="13"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                            <ComboBox x:Name="MonthCombo" Width="70" IsEnabled="False" SelectionChanged="DatePart_SelectionChanged" />
+                            <TextBlock Text="月" VerticalAlignment="Center" FontSize="13"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                            <ComboBox x:Name="DayCombo" Width="70" IsEnabled="False" SelectionChanged="DatePart_SelectionChanged" />
+                            <TextBlock Text="日" VerticalAlignment="Center" FontSize="13"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 根据屏幕比例及分辨率推荐壁纸 -->
+                <CheckBox x:Name="RecommendCheck" Content="根据屏幕比例及分辨率推荐壁纸" FontSize="13"
+                          Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+
+                <!-- 下载按钮（对应设计稿 accent button） -->
+                <Button x:Uid="StartDownloadBtn" Click="StartDownloadButton_Click" Width="180" Height="40"
+                        Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Left" />
+
+                <!-- 下载状态（设计稿未体现，保留供代码后台输出日志） -->
+                <TextBox x:Name="DownloadStatusText" TextWrapping="Wrap" Margin="0,4,0,0" AcceptsReturn="True" IsReadOnly="True"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto" Height="160"
+                         Header="下载状态" />
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

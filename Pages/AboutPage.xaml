@@ -13,13 +13,11 @@
             <Setter Property="BorderBrush" Value="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="16,16,16,16" />
-            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Padding" Value="16,20" />
         </Style>
         <Style x:Key="SectionLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Foreground" Value="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-            <Setter Property="Margin" Value="0,0,0,6" />
         </Style>
         <Style x:Key="CardTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="14" />
@@ -33,13 +31,13 @@
         </Style>
         <Style x:Key="CardAction" TargetType="Button">
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Padding" Value="14,6,14,6" />
+            <Setter Property="Padding" Value="14,6" />
             <Setter Property="FontSize" Value="13" />
         </Style>
     </Page.Resources>
 
     <Grid>
-        <!-- 右侧详情面板：浮层式（对应设计稿 about.html 的 panel-overlay + side-panel，md/2.md 的 SplitView Overlay） -->
+        <!-- 右侧详情面板：浮层式 SplitView（对应设计稿 panel-overlay + side-panel） -->
         <SplitView x:Name="DetailPane"
                    PanePlacement="Right"
                    OpenPaneLength="380"
@@ -47,223 +45,225 @@
                    IsPaneOpen="False"
                    LightDismissOverlayMode="On">
             <SplitView.Content>
-        <!-- 主内容 -->
-        <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
-            <StackPanel Padding="32,24,24,32" MaxWidth="760" Spacing="20">
+                <!-- 主内容 -->
+                <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Padding="32,24,32,32" MaxWidth="720" Spacing="24">
 
-                <!-- 页面标题 -->
-                <TextBlock Text="关于" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,4"
-                           Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                        <!-- 页面标题 -->
+                        <TextBlock Text="关于" FontSize="28" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
 
-                <!-- 关于本软件 -->
-                <StackPanel>
-                    <TextBlock Text="关于" Style="{StaticResource SectionLabel}" />
-                    <Border Style="{StaticResource AboutCard}">
-                        <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
-                                    Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
-                                <FontIcon Glyph="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                                          Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                        <!-- 关于本软件 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="关于" Style="{StaticResource SectionLabel}" />
+                            <Border Style="{StaticResource AboutCard}">
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
+                                            Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
+                                        <FontIcon Glyph="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                                  Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="BingPaper" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Text="每日 Bing 壁纸下载与设置工具" Style="{StaticResource CardSubtitle}" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2" Text="版本 1.0.0" VerticalAlignment="Center" FontSize="13"
+                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                                </Grid>
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="BingPaper" Style="{StaticResource CardTitle}" />
-                                <TextBlock Text="每日 Bing 壁纸下载与设置工具" Style="{StaticResource CardSubtitle}" />
-                            </StackPanel>
-                            <TextBlock Grid.Column="2" Text="版本 1.0.0" VerticalAlignment="Center" FontSize="13"
-                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-                        </Grid>
-                    </Border>
-                </StackPanel>
+                        </StackPanel>
 
-                <!-- 作者 -->
-                <StackPanel>
-                    <TextBlock Text="作者" Style="{StaticResource SectionLabel}" />
-                    <Border Style="{StaticResource AboutCard}">
-                        <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
-                                    Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
-                                <FontIcon Glyph="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                                          Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                        <!-- 作者 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="作者" Style="{StaticResource SectionLabel}" />
+                            <Border Style="{StaticResource AboutCard}">
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
+                                            Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
+                                        <FontIcon Glyph="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                                  Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="世一史蒂夫" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Text="开发者 / Designer" Style="{StaticResource CardSubtitle}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Content="GitHub" Style="{StaticResource CardAction}" Click="OpenAuthorGit_Click" />
+                                </Grid>
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="世一史蒂夫" Style="{StaticResource CardTitle}" />
-                                <TextBlock Text="开发者 / Designer" Style="{StaticResource CardSubtitle}" />
-                            </StackPanel>
-                            <Button Grid.Column="2" Content="GitHub" Style="{StaticResource CardAction}" Click="OpenAuthorGit_Click" />
-                        </Grid>
-                    </Border>
-                </StackPanel>
+                        </StackPanel>
 
-                <!-- 链接 -->
-                <StackPanel>
-                    <TextBlock Text="链接" Style="{StaticResource SectionLabel}" />
-                    <Border Style="{StaticResource AboutCard}">
-                        <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
-                                    Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
-                                <FontIcon Glyph="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                                          Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                        <!-- 链接 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="链接" Style="{StaticResource SectionLabel}" />
+                            <Border Style="{StaticResource AboutCard}">
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
+                                            Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
+                                        <FontIcon Glyph="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                                  Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="智鱼工作室" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Text="工作室 GitHub 主页" Style="{StaticResource CardSubtitle}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Content="访问" Style="{StaticResource CardAction}" Click="OpenAuthorGit_Click" />
+                                </Grid>
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="智鱼工作室" Style="{StaticResource CardTitle}" />
-                                <TextBlock Text="工作室 GitHub 主页" Style="{StaticResource CardSubtitle}" />
-                            </StackPanel>
-                            <Button Grid.Column="2" Content="访问" Style="{StaticResource CardAction}" Click="OpenAuthorGit_Click" />
-                        </Grid>
-                    </Border>
-                    <Border Style="{StaticResource AboutCard}">
-                        <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
-                                    Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
-                                <FontIcon Glyph="&#xE8DA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                                          Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                            <Border Style="{StaticResource AboutCard}">
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
+                                            Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
+                                        <FontIcon Glyph="&#xE8DA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                                  Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="BingPaper" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Text="项目开源仓库" Style="{StaticResource CardSubtitle}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Content="访问" Style="{StaticResource CardAction}" Click="OpenProjectGit_Click" />
+                                </Grid>
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="BingPaper" Style="{StaticResource CardTitle}" />
-                                <TextBlock Text="项目开源仓库" Style="{StaticResource CardSubtitle}" />
-                            </StackPanel>
-                            <Button Grid.Column="2" Content="访问" Style="{StaticResource CardAction}" Click="OpenProjectGit_Click" />
-                        </Grid>
-                    </Border>
-                </StackPanel>
+                        </StackPanel>
 
-                <!-- 开源引用 -->
-                <StackPanel>
-                    <TextBlock Text="开源引用" Style="{StaticResource SectionLabel}" />
-                    <Border Style="{StaticResource AboutCard}">
-                        <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
-                                    Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
-                                <FontIcon Glyph="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                                          Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                        <!-- 开源引用 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="开源引用" Style="{StaticResource SectionLabel}" />
+                            <Border Style="{StaticResource AboutCard}">
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
+                                            Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
+                                        <FontIcon Glyph="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                                  Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="开源引用" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Text="查看本软件使用的所有开源项目" Style="{StaticResource CardSubtitle}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Content="查看全部" Style="{StaticResource CardAction}" Click="OpenOpenSourcePanel_Click" />
+                                </Grid>
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="开源引用" Style="{StaticResource CardTitle}" />
-                                <TextBlock Text="查看本软件使用的所有开源项目" Style="{StaticResource CardSubtitle}" />
-                            </StackPanel>
-                            <Button Grid.Column="2" Content="查看全部" Style="{StaticResource CardAction}" Click="OpenOpenSourcePanel_Click" />
-                        </Grid>
-                    </Border>
-                </StackPanel>
+                        </StackPanel>
 
-                <!-- 工具引用 -->
-                <StackPanel>
-                    <TextBlock Text="工具引用" Style="{StaticResource SectionLabel}" />
-                    <Border Style="{StaticResource AboutCard}">
-                        <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
-                                    Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
-                                <FontIcon Glyph="&#xE90F;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                                          Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                        <!-- 工具引用 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="工具引用" Style="{StaticResource SectionLabel}" />
+                            <Border Style="{StaticResource AboutCard}">
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
+                                            Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
+                                        <FontIcon Glyph="&#xE90F;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                                  Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="工具引用" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Text="查看本软件开发与运行所用工具" Style="{StaticResource CardSubtitle}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Content="查看全部" Style="{StaticResource CardAction}" Click="OpenToolsPanel_Click" />
+                                </Grid>
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="工具引用" Style="{StaticResource CardTitle}" />
-                                <TextBlock Text="查看本软件开发与运行所用工具" Style="{StaticResource CardSubtitle}" />
-                            </StackPanel>
-                            <Button Grid.Column="2" Content="查看全部" Style="{StaticResource CardAction}" Click="OpenToolsPanel_Click" />
-                        </Grid>
-                    </Border>
-                </StackPanel>
+                        </StackPanel>
 
-                <!-- 反馈 -->
-                <StackPanel>
-                    <TextBlock Text="反馈" Style="{StaticResource SectionLabel}" />
-                    <Border Style="{StaticResource AboutCard}">
-                        <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
-                                    Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
-                                <FontIcon Glyph="&#xE7BC;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                                          Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                        <!-- 反馈 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="反馈" Style="{StaticResource SectionLabel}" />
+                            <Border Style="{StaticResource AboutCard}">
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="6"
+                                            Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
+                                        <FontIcon Glyph="&#xE7BC;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                                  Foreground="{ThemeResource SystemControlHighlightAccentBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="报告问题" Style="{StaticResource CardTitle}" />
+                                        <TextBlock Text="在 GitHub Issues 中提交问题" Style="{StaticResource CardSubtitle}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Content="提交" Style="{StaticResource CardAction}" Click="OpenProjectGit_Click" />
+                                </Grid>
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="报告问题" Style="{StaticResource CardTitle}" />
-                                <TextBlock Text="在 GitHub Issues 中提交问题" Style="{StaticResource CardSubtitle}" />
-                            </StackPanel>
-                            <Button Grid.Column="2" Content="提交" Style="{StaticResource CardAction}" Click="OpenProjectGit_Click" />
-                        </Grid>
-                    </Border>
-                </StackPanel>
+                        </StackPanel>
 
-            </StackPanel>
-        </ScrollViewer>
+                    </StackPanel>
+                </ScrollViewer>
             </SplitView.Content>
 
-            <!-- 右侧详情面板 -->
+            <!-- 右侧详情面板（对应设计稿 side-panel） -->
             <SplitView.Pane>
-            <Grid Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid Padding="20,16" BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,0,1">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="PanelTitle" Text="详情" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
-                               Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
-                    <Button Grid.Column="1" Click="ClosePanel_Click" Background="Transparent" BorderThickness="0" Padding="8" VerticalAlignment="Center">
-                        <FontIcon Glyph="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-                    </Button>
+                <Grid Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <!-- 面板标题栏（对应设计稿 panel header border-b） -->
+                    <Grid Padding="20,16" BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,0,1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="PanelTitle" Text="详情" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                        <Button Grid.Column="1" Click="ClosePanel_Click" Background="Transparent" BorderThickness="0" Padding="8" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                        </Button>
+                    </Grid>
+                    <!-- 列表项（对应设计稿 panel-list） -->
+                    <ListView x:Name="PanelList" Grid.Row="1" Padding="12" IsItemClickEnabled="False">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="local:AboutLinkItem" xmlns:local="using:BingPaper.Pages">
+                                <Grid Padding="12" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center" FontSize="13"
+                                               Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                                    <HyperlinkButton Grid.Column="1" Content="访问" NavigateUri="{x:Bind Url}" Padding="4" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
                 </Grid>
-                <ListView x:Name="PanelList" Grid.Row="1" Padding="12" IsItemClickEnabled="False">
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="local:AboutLinkItem" xmlns:local="using:BingPaper.Pages">
-                            <Grid Padding="8" ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center" FontSize="13"
-                                           Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
-                                <HyperlinkButton Grid.Column="1" Content="访问" NavigateUri="{x:Bind Url}" Padding="4" />
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                    <ListView.ItemContainerStyle>
-                        <Style TargetType="ListViewItem">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="Padding" Value="0" />
-                        </Style>
-                    </ListView.ItemContainerStyle>
-                </ListView>
-            </Grid>
             </SplitView.Pane>
         </SplitView>
     </Grid>

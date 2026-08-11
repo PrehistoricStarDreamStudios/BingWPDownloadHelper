@@ -13,7 +13,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 标题 + 主题筛选（右侧） -->
+        <!-- 标题 + 主题筛选（右侧，对应设计稿 flex justify-between） -->
         <Grid Margin="0,0,0,24">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -31,27 +31,25 @@
             </StackPanel>
         </Grid>
 
+        <!-- 方形缩略图网格（对应设计稿 grid auto-fill minmax(140px, 1fr)，aspect-ratio: 1/1） -->
         <GridView x:Name="PreviewGridView" Grid.Row="1" SelectionMode="None" IsItemClickEnabled="False" Padding="0"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
                   ContainerContentChanging="PreviewGridView_ContainerContentChanging">
             <GridView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Width="180" Height="180" Margin="4" PointerEntered="PreviewItem_PointerEntered" PointerExited="PreviewItem_PointerExited">
+                    <Grid Width="140" Height="140" Margin="3" PointerEntered="PreviewItem_PointerEntered" PointerExited="PreviewItem_PointerExited">
                         <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="6" />
                         <Image x:Name="ItemImg" Stretch="UniformToFill" RenderTransformOrigin="0.5,0.5">
                             <Image.RenderTransform>
                                 <ScaleTransform x:Name="ItemScale" ScaleX="1" ScaleY="1" />
                             </Image.RenderTransform>
                         </Image>
-                        <Border VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Background="#80000000" Padding="6,3" CornerRadius="0,0,6,6">
-                            <TextBlock Text="{Binding TagsDisplay}" FontSize="11" Foreground="White" TextTrimming="CharacterEllipsis" />
-                        </Border>
                     </Grid>
                 </DataTemplate>
             </GridView.ItemTemplate>
             <GridView.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <ItemsWrapGrid Orientation="Horizontal" ItemWidth="188" ItemHeight="188" />
+                    <ItemsWrapGrid Orientation="Horizontal" ItemWidth="146" ItemHeight="146" />
                 </ItemsPanelTemplate>
             </GridView.ItemsPanel>
             <GridView.ItemContainerStyle>
