@@ -32,6 +32,9 @@ namespace BingPaper
             Instance = this;
             this.InitializeComponent();
 
+            // 标题栏文本：与设计稿保持一致 "BingPaper-[版本号] 作者:世一史蒂夫"
+            try { if (AppTitleText != null) AppTitleText.Text = $"BingPaper-{AppVersion} 作者:世一史蒂夫"; } catch { }
+
             // WinUI3 标准标题栏：将内容延伸到标题栏区域
             this.ExtendsContentIntoTitleBar = true;
 
@@ -390,13 +393,23 @@ namespace BingPaper
             catch { }
         }
 
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (contentFrame != null && contentFrame.CanGoBack)
+                    contentFrame.GoBack();
+            }
+            catch { }
+        }
+
         private void UpdateNavLayout(NavigationView nav)
         {
             try
             {
                 if (nav == null) return;
-                double openW = 240;
-                try { double winW = this.Bounds.Width; if (winW > 0) openW = Math.Max(200, Math.Min(400, winW * 0.4)); } catch { }
+                double openW = 260;
+                try { double winW = this.Bounds.Width; if (winW > 0) openW = Math.Max(240, Math.Min(420, winW * 0.4)); } catch { }
                 try
                 {
                     double maxText = 0;

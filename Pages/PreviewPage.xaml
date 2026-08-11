@@ -7,41 +7,49 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Margin="8">
+    <Grid Padding="32,24,32,32">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock x:Uid="PreviewPageTitle" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
-            <TextBlock x:Uid="TagFilterLabel" VerticalAlignment="Center" Margin="24,0,0,0" />
-            <ComboBox x:Name="TagFilterCombo" Width="140" SelectionChanged="TagFilter_SelectionChanged" />
-            <TextBlock x:Name="PreviewCountText" Text="" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="13"
-                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-        </StackPanel>
+        <!-- 标题 + 主题筛选（右侧，对应设计稿 flex justify-between） -->
+        <Grid Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="壁纸预览" FontSize="28" FontWeight="SemiBold"
+                       Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                       VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Text="主题：" FontSize="13" VerticalAlignment="Center"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                <ComboBox x:Name="TagFilterCombo" Width="140" SelectionChanged="TagFilter_SelectionChanged" />
+                <TextBlock x:Name="PreviewCountText" Text="" VerticalAlignment="Center" FontSize="13"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" Margin="8,0,0,0" />
+            </StackPanel>
+        </Grid>
 
+        <!-- 方形缩略图网格（对应设计稿 grid auto-fill minmax(140px, 1fr)，aspect-ratio: 1/1） -->
         <GridView x:Name="PreviewGridView" Grid.Row="1" SelectionMode="None" IsItemClickEnabled="False" Padding="0"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
                   ContainerContentChanging="PreviewGridView_ContainerContentChanging">
             <GridView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Width="240" Height="240" Margin="4" PointerEntered="PreviewItem_PointerEntered" PointerExited="PreviewItem_PointerExited">
-                        <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" />
+                    <Grid Width="140" Height="140" Margin="3" PointerEntered="PreviewItem_PointerEntered" PointerExited="PreviewItem_PointerExited">
+                        <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="6" />
                         <Image x:Name="ItemImg" Stretch="UniformToFill" RenderTransformOrigin="0.5,0.5">
                             <Image.RenderTransform>
                                 <ScaleTransform x:Name="ItemScale" ScaleX="1" ScaleY="1" />
                             </Image.RenderTransform>
                         </Image>
-                        <Border VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Background="#80000000" Padding="6,3">
-                            <TextBlock Text="{Binding TagsDisplay}" FontSize="11" Foreground="White" TextTrimming="CharacterEllipsis" />
-                        </Border>
                     </Grid>
                 </DataTemplate>
             </GridView.ItemTemplate>
             <GridView.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <ItemsWrapGrid Orientation="Horizontal" />
+                    <ItemsWrapGrid Orientation="Horizontal" ItemWidth="146" ItemHeight="146" />
                 </ItemsPanelTemplate>
             </GridView.ItemsPanel>
             <GridView.ItemContainerStyle>
