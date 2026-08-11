@@ -99,7 +99,7 @@ namespace BingPaper.Pages
         {
             try
             {
-                if (DetailPane != null) DetailPane.Visibility = Visibility.Collapsed;
+                if (DetailPane != null) DetailPane.IsPaneOpen = false;
             }
             catch { }
         }
@@ -110,7 +110,7 @@ namespace BingPaper.Pages
             {
                 if (PanelTitle != null) PanelTitle.Text = title;
                 if (PanelList != null) PanelList.ItemsSource = items;
-                if (DetailPane != null) DetailPane.Visibility = Visibility.Visible;
+                if (DetailPane != null) DetailPane.IsPaneOpen = true;
             }
             catch { }
         }

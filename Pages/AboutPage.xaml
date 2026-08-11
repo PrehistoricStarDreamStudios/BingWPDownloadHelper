@@ -39,13 +39,16 @@
     </Page.Resources>
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="380" x:Name="PaneCol" />
-        </Grid.ColumnDefinitions>
-
+        <!-- 右侧详情面板：浮层式（对应设计稿 about.html 的 panel-overlay + side-panel，md/2.md 的 SplitView Overlay） -->
+        <SplitView x:Name="DetailPane"
+                   PanePlacement="Right"
+                   OpenPaneLength="380"
+                   DisplayMode="Overlay"
+                   IsPaneOpen="False"
+                   LightDismissOverlayMode="On">
+            <SplitView.Content>
         <!-- 主内容 -->
-        <ScrollViewer Grid.Column="0" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+        <ScrollViewer HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
             <StackPanel Padding="32,24,24,32" MaxWidth="760" Spacing="20">
 
@@ -219,12 +222,11 @@
 
             </StackPanel>
         </ScrollViewer>
+            </SplitView.Content>
 
-        <!-- 右侧详情面板 -->
-        <Border x:Name="DetailPane" Grid.Column="1" Visibility="Collapsed"
-                Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="1,0,0,0">
-            <Grid>
+            <!-- 右侧详情面板 -->
+            <SplitView.Pane>
+            <Grid Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -262,6 +264,7 @@
                     </ListView.ItemContainerStyle>
                 </ListView>
             </Grid>
-        </Border>
+            </SplitView.Pane>
+        </SplitView>
     </Grid>
 </Page>
