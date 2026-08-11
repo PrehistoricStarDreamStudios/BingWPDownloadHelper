@@ -29,3 +29,6 @@ BundleArtifacts/
 *.appx
 *.msix
 *.pfx
+
+## Agent uploads (design references)
+.uploads/
